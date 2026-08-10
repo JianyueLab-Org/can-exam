@@ -161,6 +161,26 @@ export function ratingName(id: number | null | undefined): string {
   return RATINGS[id] ?? String(id);
 }
 
+/**
+ * Division 的编码，和 can-api 的 `division.region` / `store.Region*` 同一套。
+ *
+ * **0 是「全网」，不是「没填」。** 入网测试就在 0 上，而 0 上的卷子只有 SUP/
+ * ADM 能改 —— 某个 division 的教员不该能改让人进网络的那份考卷。把它当成缺省
+ * 值处理（「没选就给 0 吧」）会把一份卷子交给另一批人。
+ */
+export const REGIONS: Record<number, string> = {
+  0: "network",
+  1: "prc",
+  2: "usa",
+  3: "jpn",
+  4: "hk",
+};
+
+/** Division 的字典键，页面拿它到 `region.*` 下面取本地化的名字。 */
+export function regionKey(region: number): string {
+  return REGIONS[region] ?? "unknown";
+}
+
 /** 全部等级，给管理端的下拉用。 */
 export function allRatings(): { id: number; name: string }[] {
   return Object.keys(RATINGS)

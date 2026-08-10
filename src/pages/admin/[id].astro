@@ -27,6 +27,10 @@ let forbidden = true;
 if (member) {
   // 卷子清单和题目一起读：上游没有「按 id 读一份卷子」的管理端路由，卷子的元
   // 信息（抽题数、标题）只有在清单里。多读几行，省一条路由。
+  //
+  // 顺带也是一道权限检查：清单是上游按 division 过滤过的，所以别人 division
+  // 的卷子在这里根本 find 不到，`paper` 是 null，页面显示「没有权限」。题目那
+  // 一次调用上游也会自己判（那边答 404），两边独立成立。
   const [papers, bank] = await Promise.all([
     readApi<{ data?: { papers: AdminPaper[] } }>(
       Astro,

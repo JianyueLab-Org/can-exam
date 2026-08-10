@@ -31,7 +31,7 @@ bun run build && bun run start
 项。想在页面上「顺便显示一下正确答案」时会发现无处可取，那正是设计。
 
 唯一的例外是题库管理页（`/admin/*`），它显示答案，因为它的数据走的是上游
-`WithSup`（SUP/ADM）后面的另一组路由。那一侧的类型在 `src/lib/admin.ts`，和考生
+`WithSuper`（教员及以上）后面、再按 division 过滤过的另一组路由。那一侧的类型在 `src/lib/admin.ts`，和考生
 侧的 `src/lib/exams.ts` **刻意不共享任何结构** —— 共享一个 `Question` 类型的
 话，某天有人在考生页面上写 `q.options[i].isCorrect`，TypeScript 会愉快放行，而
 运行时恰好是 undefined，于是没有人发现这行代码写错了。can-api 那边做了同样的切
@@ -91,21 +91,48 @@ Astro 在 SSR 下默认从 `Host` 头推出本站 origin 再和浏览器的 `Ori
 | `GET /api/v1/history`                         | `GET /api/v1/pilot/exam`                    |
 | `POST /api/v1/sit/{slug}`                     | `POST /api/v1/pilot/exam/papers/{slug}/sit` |
 | `GET·POST /api/v1/sittings/{token}`           | `…/pilot/exam/sittings/{token}`             |
-| `/api/v1/admin/**`                            | `/api/v1/super/exam/**`（WithSup）          |
+| `/api/v1/admin/**`                            | `/api/v1/super/exam/**`（WithSuper）        |
 | `GET /api/v1/session`、`POST /api/v1/signout` | `…/auth/session`、`…/auth/signout`          |
 
 **这一侧一次授权判断都不做。** 不看 rating、不看会话内容，只把 cookie 转过去、
 把状态码抄回来。两处各判一次的话，两处会慢慢长得不一样，而更宽松的那一处就是实
 际生效的那一处。`lib/member.ts` 的 `canManageBank()` 只决定**画不画**管理入口。
 
-## 权限与升级
+## 谁能改题库
 
-一份卷子可以设 `promoteTo`：通过之后把成员的 rating 提到那个值。上游会拒绝授予
-SUP/ADM —— 那两个等级能编辑题库，一份能授予它们的卷子就是一条「自己发卷子给自己
-升级」的路。管理页的下拉里干脆不列。
+**教员及以上，按 division 分权。** 一开始是 SUP/ADM 独占 —— 对一张决定谁能拿到
+什么等级的表来说那是对的默认值，代价是全网每个 division 的理论题都要那两个人来
+写。
 
-提升还受卷子的等级门槛约束（提升语句带 `AND rating IN (…)`），所以一个后来被教
-员提上去的人，不会被他上个月考的卷子按回观察员。
+上游一份卷子要同时过两道门（细节在 can-api 的 `internal/exam/authority.go`）：
+
+- **Division。** `examPaper.region` 用的是 `division.region` 那套编码。教员能改
+  自己挂着 active `instructor` 行的那些 division 的卷子。**0 是「全网」不是「没
+  填」** —— 入网测试在 0 上，只有 SUP/ADM 能碰。
+- **等级。** 一份卷子不能被「它可能提升到其自身等级或更高」的人**管理** —— 注意
+  是管理，不只是「不能把 promoteTo 设成那个值」。能改一份授予 I3 的卷子的**题
+  目**，就能把它改简单然后自己去考；只卡 promoteTo 那个字段的话，这扇门还开着，
+  而那正是有人会走的那扇。谁都不能授予 SUP/ADM，ADM 自己也不行。
+
+两个后果这一侧要配合：
+
+**读和写卡得一样死。** 管理端的题目带 `isCorrect`，所以「能看」和「能改」在这里
+是同一个权限；给别的 division 一个只读视图，只是慢一点地泄题。
+
+**下拉里的选项不是这边算的。** 卷子清单的响应里带着 `authority`（能管哪些
+division、最高能授予到哪一级），`BankPapers.vue` 拿它画 region 和 promoteTo 两
+个下拉。自己算的话，一个 I1 和一个 ADM 会看到同一份选项，然后其中一个人保存时撞
+403。
+
+`lib/member.ts` 的 `MIN_ADMIN_RATING` 是 8（I1），它只决定页眉上画不画那个链接。
+rating 够但在任何 division 都没有 instructor 行的人，上游答 403，管理页显示「你
+不管理任何 division」—— 那需要查库，只有 can-api 判得了。
+
+## 卷子的升级
+
+一份卷子可以设 `promoteTo`：通过之后把成员的 rating 提到那个值。提升受卷子的等级
+门槛约束（上游的提升语句带 `AND rating IN (…)`），所以一个后来被教员提上去的人，
+不会被他上个月考的卷子按回观察员。
 
 ## 上线顺序
 
