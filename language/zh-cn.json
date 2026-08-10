@@ -43,6 +43,14 @@
       "unknownExam": "已下线的考试"
     }
   },
+  "region": {
+    "network": "全网",
+    "prc": "中国大陆",
+    "usa": "美国",
+    "jpn": "日本",
+    "hk": "中国香港",
+    "unknown": "未知"
+  },
   "sit": {
     "back": "返回考试中心",
     "loading": "正在抽题…",
@@ -84,6 +92,13 @@
     "title": "题库管理",
     "description": "卷子决定谁能拿到什么等级，所以这里只有 SUP / ADM 能进。",
     "forbidden": "你没有管理题库的权限。",
+    "division": "Division",
+    "divisionHelp": "决定谁能改这份卷子：只有这个 division 的教员（和 SUP/ADM）能改。「全网」只有 SUP/ADM 能用。",
+    "noDivision": "你目前不管理任何 division，所以没有可以编辑的题库。",
+    "scopedTo": "你能编辑的是：{regions}",
+    "globalScope": "你能编辑全部 division 的题库。",
+    "grantCeiling": "你写的卷子最高能授予 {rating}。",
+    "grantCeilingNone": "你写的卷子不能授予任何等级。",
     "back": "返回题库管理",
     "papers": {
       "title": "卷子",
@@ -110,6 +125,8 @@
       "titleEdit": "编辑卷子",
       "slug": "地址",
       "slugHelp": "只能用小写字母、数字和连字符，作答地址是 /sit/<地址>。",
+      "division": "Division",
+      "divisionHelp": "决定谁能改这份卷子：只有这个 division 的教员（和 SUP/ADM）能改。",
       "name": "名称",
       "description": "说明",
       "scope": "分栏",
@@ -151,6 +168,11 @@
       "delete": "删除",
       "deleteConfirm": "删除这道题？",
       "uncategorised": "未分类"
+    },
+    "errors": {
+      "wrong_region": "你只能把卷子放在自己管理的 division 下。",
+      "grant_too_high": "卷子不能授予你自己的等级或更高。",
+      "forbidden": "你不管理任何 division。"
     }
   }
 }

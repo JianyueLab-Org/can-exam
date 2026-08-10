@@ -43,6 +43,14 @@
       "unknownExam": "終了した試験"
     }
   },
+  "region": {
+    "network": "ネットワーク全体",
+    "prc": "中国本土",
+    "usa": "アメリカ",
+    "jpn": "日本",
+    "hk": "香港",
+    "unknown": "不明"
+  },
   "sit": {
     "back": "試験センターに戻る",
     "loading": "問題を抽出しています…",
@@ -84,6 +92,13 @@
     "title": "問題バンク",
     "description": "試験はレーティングの付与を左右するため、ここは SUP / ADM 専用です。",
     "forbidden": "問題バンクを管理する権限がありません。",
+    "division": "Division",
+    "divisionHelp": "この試験を編集できる人を決めます：その division の教員と SUP/ADM のみ。「ネットワーク全体」は SUP/ADM 専用です。",
+    "noDivision": "どの division の教員でもないため、編集できる問題バンクがありません。",
+    "scopedTo": "編集できる範囲：{regions}",
+    "globalScope": "すべての division の問題バンクを編集できます。",
+    "grantCeiling": "作成する試験が付与できる上限は {rating} です。",
+    "grantCeilingNone": "作成する試験でレーティングを付与することはできません。",
     "back": "問題バンクに戻る",
     "papers": {
       "title": "試験",
@@ -110,6 +125,8 @@
       "titleEdit": "試験を編集",
       "slug": "アドレス",
       "slugHelp": "小文字・数字・ハイフンのみ。受験ページは /sit/<アドレス> です。",
+      "division": "Division",
+      "divisionHelp": "この試験を編集できる人を決めます：その division の教員と SUP/ADM。",
       "name": "名称",
       "description": "説明",
       "scope": "区分",
@@ -151,6 +168,11 @@
       "delete": "削除",
       "deleteConfirm": "この問題を削除しますか？",
       "uncategorised": "未分類"
+    },
+    "errors": {
+      "wrong_region": "自分が担当する division にのみ試験を作成できます。",
+      "grant_too_high": "試験で自分と同等以上のレーティングは付与できません。",
+      "forbidden": "どの division の教員でもありません。"
     }
   }
 }

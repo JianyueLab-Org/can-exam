@@ -19,6 +19,13 @@ export interface AdminPaper {
   title: string;
   description: string;
   scope: ExamScope;
+  /**
+   * 这份卷子归哪个 division，编码见 `exams.ts` 的 `REGIONS`。
+   *
+   * 它不是分类标签，是一条权限边界：改它等于把这份卷子交给另一批人。0（全网）
+   * 只有 SUP/ADM 能用。
+   */
+  region: number;
   /** 设置值。0 表示「题库里启用的题全抽」。 */
   drawCount: number;
   /** 实际会抽几题（drawCount 按题库大小夹过之后）。 */
@@ -32,6 +39,23 @@ export interface AdminPaper {
   /** 0 草稿, 1 已发布。 */
   status: number;
   createdBy: string;
+}
+
+/**
+ * 调用者自己能做什么 —— 上游随卷子清单一起给的。
+ *
+ * 前端**不自己算**这个。能管哪些 division 要查 `division` 表，能授予到哪一级
+ * 取决于调用者自己的 rating 和一条「不能授予自己这一级」的规则；两边各算一遍
+ * 的话，两边会慢慢长得不一样，而更宽松的那一份就是实际生效的那一份。这里只是
+ * 拿它来画下拉框。
+ */
+export interface BankAuthority {
+  /** SUP/ADM：所有 division，包括全网级的那些。 */
+  global: boolean;
+  /** 能给卷子选哪些 division。SUP/ADM 拿到全部（含 0）。 */
+  regions: number[];
+  /** 卷子最高能授予到哪一级。-2 表示一级都不能授予。 */
+  maxGrant: number;
 }
 
 /** 一道题，**带答案**。 */
@@ -59,7 +83,7 @@ export interface QuestionDraft {
 /** 卷子草稿是空的样子。 */
 export const EMPTY_PAPER: Omit<
   AdminPaper,
-  "id" | "draw" | "questionCount" | "createdBy"
+  "id" | "draw" | "questionCount" | "createdBy" | "region"
 > = {
   slug: "",
   title: "",

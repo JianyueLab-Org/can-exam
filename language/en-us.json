@@ -43,6 +43,14 @@
       "unknownExam": "Retired exam"
     }
   },
+  "region": {
+    "network": "Network-wide",
+    "prc": "PRC",
+    "usa": "USA",
+    "jpn": "Japan",
+    "hk": "Hong Kong",
+    "unknown": "Unknown"
+  },
   "sit": {
     "back": "Back to the exam centre",
     "loading": "Drawing your paper…",
@@ -84,6 +92,13 @@
     "title": "Question bank",
     "description": "Papers decide who gets which rating, so this is SUP/ADM only.",
     "forbidden": "You may not manage the question bank.",
+    "division": "Division",
+    "divisionHelp": "Decides who may edit this paper: instructors of that division, plus SUP/ADM. Network-wide is SUP/ADM only.",
+    "noDivision": "You do not instruct in any division, so there is no bank for you to edit.",
+    "scopedTo": "You may edit: {regions}",
+    "globalScope": "You may edit every division's bank.",
+    "grantCeiling": "Papers you write may grant up to {rating}.",
+    "grantCeilingNone": "Papers you write may not grant a rating.",
     "back": "Back to the question bank",
     "papers": {
       "title": "Papers",
@@ -110,6 +125,8 @@
       "titleEdit": "Edit paper",
       "slug": "Address",
       "slugHelp": "Lowercase letters, digits and dashes. Candidates sit it at /sit/<address>.",
+      "division": "Division",
+      "divisionHelp": "Decides who may edit this paper: that division's instructors, plus SUP/ADM.",
       "name": "Name",
       "description": "Description",
       "scope": "Track",
@@ -151,6 +168,11 @@
       "delete": "Delete",
       "deleteConfirm": "Delete this question?",
       "uncategorised": "Uncategorised"
+    },
+    "errors": {
+      "wrong_region": "You may only file papers under a division you instruct in.",
+      "grant_too_high": "An exam may not grant your own rating or above.",
+      "forbidden": "You do not instruct in any division."
     }
   }
 }
