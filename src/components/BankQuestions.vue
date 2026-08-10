@@ -1,29 +1,43 @@
 <script setup lang="ts">
 /**
- * 一份卷子的题库：读、加、改、删、停用。
+ * 一份卷子的题库：读、加、改、删、停用、复制。
  *
  * **这是整个仓库里唯一显示正确答案的界面。** 它能这么做，是因为拿到这些数据的
- * 那条路（`/api/v1/admin/*`）在上游挂在 `WithSup` 后面。类型也是分开的
- * （`lib/admin.ts` 而不是 `lib/exams.ts`），这样「在考生页面上顺手读一下
- * isCorrect」会直接编译不过，而不是在运行时悄悄拿到 undefined。
+ * 那条路（`/api/v1/admin/*`）在上游挂在 `WithSuper` 后面、再按 division 过滤。
+ * 类型也是分开的（`lib/admin.ts` 而不是 `lib/exams.ts`），这样「在考生页面上顺
+ * 手读一下 isCorrect」会直接编译不过，而不是在运行时悄悄拿到 undefined。
  *
- * 两个会让人踩坑的行为，都写在界面上而不是只写在这里：
+ * ## 三条改题的规矩，界面要替人记住
  *
- * **停用不是删除。** 停用的题不会被抽中，但一张已经发出去、人正在答的卷子上
- * 如果有它，那道题仍然算数。要的就是这个 —— 否则改一次题库就能让正在考试的人
- * 手里的卷子判不了。
+ * **改题会给选项换新 id。** 上游是整组重写选项的，所以改动之前发出去的卷子，那
+ * 道题会解析不到答案、判为答错。这是有意的方向（题面刚改过，不该把旧答案当没事
+ * 发生），但它意味着「改」不是免费的 —— 编辑一道**启用中**的题时会说这句话。
  *
- * **改题会给选项换新 id。** 上游是整组重写选项的，所以改动之前发出去的那些卷
- * 子，那道题会解析不到答案、判为答错。这是有意的方向（题面刚改过，不该把旧答
- * 案当没事发生），但改一道正在被人作答的题之前值得知道。
+ * **停用和改分类是免费的。** 上游不带 `options` 的 PATCH 不动选项，所以内联的
+ * 启用/停用开关不会碰任何人正在答的卷子。这也是它敢做成一键开关、而不是「进编
+ * 辑框再保存」的原因 —— 后者会连带重写选项。
+ *
+ * **停用不是删除。** 停用的题不再被抽中，但已经发出去、正在作答的卷子上如果有
+ * 它，那道题仍然算数。要的就是这个：否则改一次题库就能让正在考试的人手里的卷子
+ * 判不了。
+ *
+ * ## 排序为什么只是这一页的事
+ *
+ * 列表能按分类或题面排，但那**只影响这一页**。发卷时 `exam.Draw` 无论如何都会
+ * 洗一遍顺序（哪怕是全抽），所以 `position` 对考生完全不可见。既然如此，排序就
+ * 做成纯客户端的：没有写库、没有选项 id 变动、代价为零。想调考生看到的题序是做
+ * 不到的，那正是设计。
  */
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
 import AlertBox from "@/components/ui/AlertBox.vue";
 import BaseBadge from "@/components/ui/BaseBadge.vue";
 import BaseButton from "@/components/ui/BaseButton.vue";
 import BaseCard from "@/components/ui/BaseCard.vue";
+import BaseDialog from "@/components/ui/BaseDialog.vue";
 import BaseInput from "@/components/ui/BaseInput.vue";
+import BaseSelect from "@/components/ui/BaseSelect.vue";
+import BaseTextarea from "@/components/ui/BaseTextarea.vue";
 import BaseToggle from "@/components/ui/BaseToggle.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
 import Icon from "@/components/ui/Icon.vue";
@@ -50,44 +64,183 @@ const t = createTranslator(props.messages);
 
 const questions = ref<AdminQuestion[]>(props.questions);
 const error = ref<string | null>(null);
+const notice = ref<string | null>(null);
 const saving = ref(false);
+/** 正在做单项操作（开关/复制/删除）的题号，用来只转那一行的按钮。 */
+const busyId = ref<number | null>(null);
 
-/** 正在编辑的题的 id；0 表示正在新建；null 表示没在编辑。 */
-const editingId = ref<number | null>(null);
-const draft = ref<QuestionDraft>(emptyQuestion());
+/* ------------------------------------------------------------------ *
+ * 筛选
+ * ------------------------------------------------------------------ */
 
-/** 按知识点分组，未填的归到「未分类」。纯粹是给人看的，抽题不看分组。 */
-const grouped = computed(() => {
-  const groups = new Map<string, AdminQuestion[]>();
+const search = ref("");
+const categoryFilter = ref("");
+const statusFilter = ref("");
+const sortBy = ref("default");
+
+/** 「未分类」在筛选下拉里的值。带个空格，不可能和真实分类撞上。 */
+const NO_CATEGORY = " none";
+
+/** 题库里已经用过的分类，筛选下拉和编辑框的候选都用它。 */
+const categories = computed(() => {
+  const seen = new Set<string>();
   for (const question of questions.value) {
-    const key = question.category || t("admin.questions.uncategorised");
-    groups.set(key, [...(groups.get(key) ?? []), question]);
+    if (question.category) seen.add(question.category);
   }
-  return [...groups.entries()].map(([category, items]) => ({
-    category,
-    items,
-  }));
+  return [...seen].sort((a, b) => a.localeCompare(b));
 });
+
+const categoryOptions = computed(() => [
+  { value: "", label: t("admin.questions.filterAllCategories") },
+  ...categories.value.map((category) => ({ value: category, label: category })),
+  { value: NO_CATEGORY, label: t("admin.questions.uncategorised") },
+]);
+
+const statusOptions = computed(() => [
+  { value: "", label: t("admin.questions.filterAllStatus") },
+  { value: "enabled", label: t("admin.questions.enabled") },
+  { value: "disabled", label: t("admin.questions.disabled") },
+]);
+
+const sortOptions = computed(() => [
+  { value: "default", label: t("admin.questions.sortDefault") },
+  { value: "category", label: t("admin.questions.sortCategory") },
+  { value: "prompt", label: t("admin.questions.sortPrompt") },
+]);
+
+/**
+ * 搜索匹配题面、选项、解析和分类。
+ *
+ * 选项也在内 —— 找一道题时记得住的往往是某个选项的措辞（「有『以上所有』的那
+ * 道」），而不是题面的头几个字。
+ */
+function matches(question: AdminQuestion, needle: string): boolean {
+  if (!needle) return true;
+  return [
+    question.prompt,
+    question.category,
+    question.explanation,
+    ...question.options.map((option) => option.label),
+  ]
+    .join("\n")
+    .toLowerCase()
+    .includes(needle);
+}
+
+const visible = computed(() => {
+  const needle = search.value.trim().toLowerCase();
+
+  const filtered = questions.value.filter((question) => {
+    if (!matches(question, needle)) return false;
+    if (categoryFilter.value === NO_CATEGORY && question.category) return false;
+    if (
+      categoryFilter.value &&
+      categoryFilter.value !== NO_CATEGORY &&
+      question.category !== categoryFilter.value
+    ) {
+      return false;
+    }
+    if (statusFilter.value === "enabled" && question.status !== 1) return false;
+    if (statusFilter.value === "disabled" && question.status === 1)
+      return false;
+    return true;
+  });
+
+  const sorted = [...filtered];
+  if (sortBy.value === "prompt") {
+    sorted.sort((a, b) => a.prompt.localeCompare(b.prompt));
+  } else if (sortBy.value === "category") {
+    // 未分类的排到最后：U+FFFF 比任何真实字符都大。
+    sorted.sort(
+      (a, b) =>
+        (a.category || "￿").localeCompare(b.category || "￿") ||
+        a.position - b.position,
+    );
+  }
+  return sorted;
+});
+
+const filtering = computed(
+  () => !!search.value.trim() || !!categoryFilter.value || !!statusFilter.value,
+);
+
+function clearFilters() {
+  search.value = "";
+  categoryFilter.value = "";
+  statusFilter.value = "";
+}
+
+/* ------------------------------------------------------------------ *
+ * 题库概况
+ * ------------------------------------------------------------------ */
 
 const enabledCount = computed(
   () => questions.value.filter((question) => question.status === 1).length,
+);
+
+/**
+ * 值得说给作者听的几件事。
+ *
+ * 都不是错误 —— 上游会把抽题数自动夹到题库大小，没有解析的题也照样能考。写出来
+ * 是因为它们都属于「一份跑得起来但不太对劲的卷子」，而那种问题不会自己浮出来。
+ */
+const warnings = computed(() => {
+  const out: string[] = [];
+  if (!props.paper) return out;
+
+  if (props.paper.drawCount > enabledCount.value) {
+    out.push(
+      t("admin.questions.warnShortBank", {
+        draw: props.paper.drawCount,
+        count: enabledCount.value,
+      }),
+    );
+  }
+  if (enabledCount.value === 0 && questions.value.length > 0) {
+    out.push(t("admin.questions.warnAllDisabled"));
+  }
+  const missing = questions.value.filter(
+    (question) => question.status === 1 && !question.explanation.trim(),
+  ).length;
+  if (missing > 0) {
+    out.push(t("admin.questions.warnNoExplanation", { count: missing }));
+  }
+  return out;
+});
+
+/* ------------------------------------------------------------------ *
+ * 编辑
+ * ------------------------------------------------------------------ */
+
+const editorOpen = ref(false);
+/** 正在编辑的题的 id；0 表示新建。 */
+const editingId = ref(0);
+const draft = ref<QuestionDraft>(emptyQuestion());
+const previewing = ref(false);
+
+const editingQuestion = computed(() =>
+  questions.value.find((question) => question.id === editingId.value),
 );
 
 function edit(question: AdminQuestion) {
   error.value = null;
   editingId.value = question.id;
   draft.value = toDraft(question);
+  previewing.value = false;
+  editorOpen.value = true;
 }
 
 function add() {
   error.value = null;
   editingId.value = 0;
   draft.value = emptyQuestion();
-}
-
-function cancel() {
-  editingId.value = null;
-  error.value = null;
+  // 正在按某个分类筛选时，新题默认落进那个分类 —— 连着录十道同一知识点的题是真
+  // 实用法，每道都重打一遍分类不是。
+  if (categoryFilter.value && categoryFilter.value !== NO_CATEGORY) {
+    draft.value.category = categoryFilter.value;
+  }
+  previewing.value = false;
+  editorOpen.value = true;
 }
 
 /** 单选题，所以标一个正确就等于取消其他的。 */
@@ -96,6 +249,12 @@ function markCorrect(index: number) {
     ...option,
     isCorrect: i === index,
   }));
+}
+
+function setOption(index: number, label: string) {
+  draft.value.options = draft.value.options.map((option, i) =>
+    i === index ? { ...option, label } : option,
+  );
 }
 
 function addOption() {
@@ -107,26 +266,49 @@ function addOption() {
 
 function removeOption(index: number) {
   const remaining = draft.value.options.filter((_, i) => i !== index);
-  // 删掉的正好是标着正确的那个时，把正确移到第一个 —— 让草稿始终停在一个上游
-  // 会接受的状态上，比让人保存一次撞一次 400 好。
+  // 删掉的正好是标着正确的那个时，把正确移到第一个 —— 让草稿始终停在一个上游会
+  // 接受的状态上，比让人保存一次撞一次 400 好。
   if (!remaining.some((option) => option.isCorrect) && remaining.length) {
     remaining[0] = { ...remaining[0], isCorrect: true };
   }
   draft.value.options = remaining;
 }
 
-async function save() {
-  // 本地先挡一遍。上游会再判一次，而**那一次才算数** —— 这里挡只是为了让人当场
-  // 看见，而不是提交完等一个来回、读一句英文的 400。
+/**
+ * 考生会看到的样子：没有答案，选项顺序洗过。
+ *
+ * 洗这一遍不是装饰。作者几乎总把正确答案放在第一个（新题的默认就是），因而很容
+ * 易忘记考生看到的不是这个顺序 —— 预览把它直接摆出来。这里的洗牌只是示意，真正
+ * 那一次在 can-api 的 `exam.Draw` 里，每次发卷都重洗。
+ */
+const previewSeed = ref(0);
+const previewOptions = computed(() => {
+  void previewSeed.value; // 重洗按钮的依赖
+  const labels = draft.value.options
+    .map((option) => option.label.trim())
+    .filter(Boolean);
+  for (let i = labels.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [labels[i], labels[j]] = [labels[j], labels[i]];
+  }
+  return labels;
+});
+
+const draftIssue = computed(() => {
   const problem = draftProblem(draft.value);
-  if (problem) {
-    error.value = t(
-      {
-        prompt: "admin.questions.needPrompt",
-        options: "admin.questions.needOptions",
-        markOne: "admin.questions.markOne",
-      }[problem] ?? "frame.error",
-    );
+  if (!problem) return null;
+  return t(
+    {
+      prompt: "admin.questions.needPrompt",
+      options: "admin.questions.needOptions",
+      markOne: "admin.questions.markOne",
+    }[problem] ?? "frame.error",
+  );
+});
+
+async function save() {
+  if (draftIssue.value) {
+    error.value = draftIssue.value;
     return;
   }
 
@@ -160,30 +342,100 @@ async function save() {
       });
     }
     await reload();
-    editingId.value = null;
+    editorOpen.value = false;
+    flash(t("admin.questions.saved"));
   } catch (err) {
-    error.value = (err as { message?: string }).message || t("frame.error");
+    error.value = describe(err);
   } finally {
     saving.value = false;
   }
 }
 
-async function remove(question: AdminQuestion) {
-  if (!window.confirm(t("admin.questions.deleteConfirm"))) return;
+/* ------------------------------------------------------------------ *
+ * 单项操作
+ * ------------------------------------------------------------------ */
+
+/**
+ * 启用 / 停用，一键。
+ *
+ * **只发 `enabled`，不发 `options`。** 上游不带选项的 PATCH 不动选项，所以这个
+ * 开关不会给选项换 id，也就不会弄坏任何人正在答的卷子。图省事复用 `save()` 那
+ * 个 body 就会弄坏，而且不会有任何报错 —— 那正是这段注释存在的理由。
+ */
+async function toggle(question: AdminQuestion) {
+  busyId.value = question.id;
+  error.value = null;
+  try {
+    await api(`/api/v1/admin/questions/${question.id}`, {
+      method: "PATCH",
+      body: { enabled: question.status !== 1 },
+    });
+    await reload();
+  } catch (err) {
+    error.value = describe(err);
+  } finally {
+    busyId.value = null;
+  }
+}
+
+/** 复制一道题。连着录一组相似的题是真实用法，从头打一遍不是。 */
+async function duplicate(question: AdminQuestion) {
+  busyId.value = question.id;
+  error.value = null;
+  try {
+    await api(`/api/v1/admin/papers/${props.paper!.id}/questions`, {
+      method: "POST",
+      body: {
+        prompt: t("admin.questions.copyOf", { prompt: question.prompt }),
+        category: question.category,
+        explanation: question.explanation,
+        // 副本默认**停用**：它标题里带着「副本」，直接进抽题池等于把一道半成品
+        // 发给考生。
+        enabled: false,
+        options: question.options.map((option) => ({
+          label: option.label,
+          isCorrect: option.isCorrect,
+        })),
+      },
+    });
+    await reload();
+    flash(t("admin.questions.duplicated"));
+  } catch (err) {
+    error.value = describe(err);
+  } finally {
+    busyId.value = null;
+  }
+}
+
+const deleting = ref<AdminQuestion | null>(null);
+
+async function confirmDelete() {
+  const question = deleting.value;
+  if (!question) return;
+
+  busyId.value = question.id;
   error.value = null;
   try {
     await api(`/api/v1/admin/questions/${question.id}`, { method: "DELETE" });
     questions.value = questions.value.filter((item) => item.id !== question.id);
+    deleting.value = null;
+    flash(t("admin.questions.deleted"));
   } catch (err) {
-    error.value = (err as { message?: string }).message || t("frame.error");
+    error.value = describe(err);
+  } finally {
+    busyId.value = null;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * 杂项
+ * ------------------------------------------------------------------ */
 
 /**
  * 保存之后整表重读，而不是就地改一行。
  *
- * 选项在上游是整组重写的，新的 id 只有重读才知道 —— 而 id 正是这一页显示对错
- * 所依赖的东西。就地拼一份出来，屏幕上就会是一份和库里不一样的题。
+ * 选项在上游是整组重写的，新的 id 只有重读才知道 —— 而 id 正是这一页显示对错所
+ * 依赖的东西。就地拼一份出来，屏幕上就会是一份和库里不一样的题。
  */
 async function reload() {
   const fresh = await api<{ questions: AdminQuestion[] }>(
@@ -191,6 +443,34 @@ async function reload() {
   );
   questions.value = fresh.questions;
 }
+
+let flashTimer: ReturnType<typeof setTimeout> | undefined;
+function flash(message: string) {
+  notice.value = message;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => (notice.value = null), 2500);
+}
+
+/**
+ * 把上游的拒绝翻成一句话。权限相关的几个码用本地文案，其余显示上游的
+ * `message` —— 它是给人看的，而且指名了出问题的字段。
+ */
+function describe(err: unknown): string {
+  const { error: code, message } = (err ?? {}) as {
+    error?: string;
+    message?: string;
+  };
+  if (code && ["wrong_region", "grant_too_high", "forbidden"].includes(code)) {
+    return t(`admin.errors.${code}`);
+  }
+  if (code === "not_found") return t("admin.errors.gone");
+  return message || t("frame.error");
+}
+
+// 关掉编辑框就把错误一起收走，否则下次打开还挂着上一次的红字。
+watch(editorOpen, (open) => {
+  if (!open) error.value = null;
+});
 </script>
 
 <template>
@@ -200,11 +480,7 @@ async function reload() {
     </AlertBox>
 
     <template v-else>
-      <PageHeader
-        :title="paper.title"
-        :description="t('admin.questions.title')"
-        icon="documentText"
-      >
+      <PageHeader :title="paper.title" icon="documentText">
         <template #actions>
           <BaseButton as="a" href="/admin" variant="ghost" size="sm">
             <template #icon><Icon name="arrowLeft" class="size-4" /></template>
@@ -217,187 +493,468 @@ async function reload() {
         </template>
       </PageHeader>
 
-      <p class="tnum -mt-4 mb-6 text-xs text-muted">
-        {{ t("admin.papers.bank") }} {{ enabledCount }} ·
-        {{ t("admin.papers.draw") }}
-        {{ paper.drawCount || t("admin.papers.drawAll") }}
-      </p>
+      <!-- 概况。抽题数和题库大小放在一起，因为它们只有对照着看才有意义。 -->
+      <BaseCard padding="md" class="-mt-4 mb-4">
+        <dl class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+          <div class="flex items-baseline gap-1.5">
+            <dt class="text-muted">{{ t("admin.questions.statBank") }}</dt>
+            <dd class="tnum font-semibold text-ink">{{ questions.length }}</dd>
+          </div>
+          <div class="flex items-baseline gap-1.5">
+            <dt class="text-muted">{{ t("admin.questions.statEnabled") }}</dt>
+            <dd class="tnum font-semibold text-ink">{{ enabledCount }}</dd>
+          </div>
+          <div class="flex items-baseline gap-1.5">
+            <dt class="text-muted">{{ t("admin.questions.statDraw") }}</dt>
+            <dd class="tnum font-semibold text-ink">
+              {{ paper.drawCount || t("admin.papers.drawAll") }}
+            </dd>
+          </div>
+          <div class="flex items-baseline gap-1.5">
+            <dt class="text-muted">
+              {{ t("admin.questions.statCategories") }}
+            </dt>
+            <dd class="tnum font-semibold text-ink">{{ categories.length }}</dd>
+          </div>
+        </dl>
 
-      <AlertBox v-if="error" variant="danger" class="mb-6">{{
+        <ul
+          v-if="warnings.length"
+          class="mt-3 space-y-1 border-t border-subtle pt-3"
+        >
+          <li
+            v-for="warning in warnings"
+            :key="warning"
+            class="flex items-start gap-1.5 text-xs text-warning-fg"
+          >
+            <Icon name="exclamationTriangle" class="mt-0.5 size-3.5 shrink-0" />
+            {{ warning }}
+          </li>
+        </ul>
+      </BaseCard>
+
+      <AlertBox v-if="error" variant="danger" class="mb-4">{{
         error
       }}</AlertBox>
+      <AlertBox v-if="notice" variant="success" class="mb-4">
+        {{ notice }}
+      </AlertBox>
 
-      <!-- 编辑器。新建时在最上面，改题时也在最上面 —— 一份五十题的卷子里就地
-           展开的表单，人滚两下就找不到自己在改哪一道了。 -->
-      <BaseCard v-if="editingId !== null" padding="lg" class="mb-6">
-        <div class="space-y-4">
-          <BaseInput
-            :model-value="draft.prompt"
-            :label="t('admin.questions.prompt')"
-            required
-            @update:model-value="(value: string) => (draft.prompt = value)"
-          />
-
-          <div class="grid gap-4 sm:grid-cols-2">
+      <!-- 筛选条。粘在顶上：一份五十题的卷子滚到一半想换个筛选，不该先滚回去。 -->
+      <div
+        class="sticky top-2 z-30 mb-4 rounded-card border border-subtle bg-chrome p-3"
+      >
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="min-w-[12rem] flex-1">
             <BaseInput
-              :model-value="draft.category"
-              :label="t('admin.questions.category')"
-              :hint="t('admin.questions.categoryHelp')"
-              @update:model-value="(value: string) => (draft.category = value)"
-            />
-            <BaseInput
-              :model-value="draft.explanation"
-              :label="t('admin.questions.explanation')"
-              :hint="t('admin.questions.explanationHelp')"
-              @update:model-value="
-                (value: string) => (draft.explanation = value)
-              "
+              :model-value="search"
+              :label="t('admin.questions.search')"
+              :placeholder="t('admin.questions.searchPlaceholder')"
+              @update:model-value="(value: string) => (search = value)"
             />
           </div>
-
-          <fieldset>
-            <legend class="text-sm font-medium text-ink">
-              {{ t("admin.questions.options") }}
-            </legend>
-            <p class="mt-0.5 text-xs text-muted">
-              {{ t("admin.questions.markOne") }}
-            </p>
-
-            <div class="mt-2 space-y-2">
-              <div
-                v-for="(option, index) in draft.options"
-                :key="index"
-                class="flex items-center gap-2"
-              >
-                <label
-                  class="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-muted"
-                >
-                  <input
-                    type="radio"
-                    name="correct-option"
-                    :checked="option.isCorrect"
-                    class="size-4 accent-[var(--color-airwaysn)]"
-                    @change="markCorrect(index)"
-                  />
-                  {{ t("admin.questions.correct") }}
-                </label>
-                <input
-                  :value="option.label"
-                  class="input flex-1"
-                  :placeholder="`${index + 1}`"
-                  @input="
-                    (event) =>
-                      (draft.options[index].label = (
-                        event.target as HTMLInputElement
-                      ).value)
-                  "
-                />
-                <button
-                  v-if="draft.options.length > 2"
-                  type="button"
-                  class="rounded-control p-1.5 text-faint hover:bg-surface-sunken hover:text-ink"
-                  :aria-label="t('admin.questions.removeOption')"
-                  @click="removeOption(index)"
-                >
-                  <Icon name="xMark" class="size-4" />
-                </button>
-              </div>
-            </div>
-
-            <BaseButton
-              variant="ghost"
-              size="sm"
-              class="mt-2"
-              @click="addOption"
-            >
-              {{ t("admin.questions.addOption") }}
-            </BaseButton>
-          </fieldset>
-
-          <BaseToggle
-            :model-value="draft.enabled"
-            :label="t('admin.questions.enabled')"
-            :description="t('admin.questions.enabledHelp')"
-            @update:model-value="(value: boolean) => (draft.enabled = value)"
+          <BaseSelect
+            :model-value="categoryFilter"
+            :label="t('admin.questions.category')"
+            :options="categoryOptions"
+            @update:model-value="
+              (value: string | number) => (categoryFilter = String(value))
+            "
           />
-
-          <div class="flex justify-end gap-2">
-            <BaseButton variant="ghost" @click="cancel">
-              {{ t("admin.paper.cancel") }}
-            </BaseButton>
-            <BaseButton :loading="saving" @click="save">
-              {{ t("admin.questions.save") }}
-            </BaseButton>
-          </div>
+          <BaseSelect
+            :model-value="statusFilter"
+            :label="t('admin.questions.status')"
+            :options="statusOptions"
+            @update:model-value="
+              (value: string | number) => (statusFilter = String(value))
+            "
+          />
+          <BaseSelect
+            :model-value="sortBy"
+            :label="t('admin.questions.sort')"
+            :options="sortOptions"
+            @update:model-value="
+              (value: string | number) => (sortBy = String(value))
+            "
+          />
         </div>
-      </BaseCard>
+
+        <p
+          v-if="filtering"
+          class="mt-2 flex items-center gap-2 text-xs text-muted"
+        >
+          {{
+            t("admin.questions.showing", {
+              shown: visible.length,
+              total: questions.length,
+            })
+          }}
+          <button type="button" class="link" @click="clearFilters">
+            {{ t("admin.questions.clearFilters") }}
+          </button>
+        </p>
+      </div>
 
       <EmptyState
         v-if="!questions.length"
         icon="documentText"
         :title="t('admin.questions.empty')"
       />
+      <EmptyState
+        v-else-if="!visible.length"
+        icon="magnifyingGlass"
+        :title="t('admin.questions.noMatches')"
+        :description="t('admin.questions.noMatchesHint')"
+      />
 
-      <section v-for="group in grouped" :key="group.category" class="mb-8">
-        <h2
-          class="mb-3 text-xs font-semibold uppercase tracking-widest text-faint"
+      <ul v-else class="space-y-2">
+        <li
+          v-for="question in visible"
+          :key="question.id"
+          class="rounded-card border border-subtle bg-surface-raised px-4 py-3"
+          :class="question.status !== 1 ? 'opacity-60' : ''"
         >
-          {{ group.category }}
-        </h2>
-
-        <ul class="space-y-2">
-          <li
-            v-for="question in group.items"
-            :key="question.id"
-            class="rounded-card border border-subtle bg-surface-raised px-4 py-3"
-          >
-            <div class="flex items-start justify-between gap-4">
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-ink">
-                  {{ question.prompt }}
-                </p>
-                <ul class="mt-2 space-y-1">
-                  <li
-                    v-for="option in question.options"
-                    :key="option.id"
-                    class="flex items-start gap-2 text-xs"
-                    :class="option.isCorrect ? 'text-success-fg' : 'text-muted'"
-                  >
-                    <Icon
-                      v-if="option.isCorrect"
-                      name="checkCircle"
-                      class="mt-0.5 size-3.5 shrink-0"
-                    />
-                    <span v-else class="mt-0.5 size-3.5 shrink-0"></span>
-                    {{ option.label }}
-                  </li>
-                </ul>
-                <p v-if="question.explanation" class="mt-2 text-xs text-faint">
-                  {{ question.explanation }}
-                </p>
-              </div>
-
-              <div class="flex shrink-0 flex-col items-end gap-2">
-                <BaseBadge v-if="question.status !== 1" variant="neutral">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0 flex-1">
+              <div
+                v-if="question.category || question.status !== 1"
+                class="mb-1.5 flex flex-wrap items-center gap-1.5"
+              >
+                <BaseBadge v-if="question.category" variant="info" size="sm">
+                  {{ question.category }}
+                </BaseBadge>
+                <BaseBadge
+                  v-if="question.status !== 1"
+                  variant="neutral"
+                  size="sm"
+                >
                   {{ t("admin.questions.disabled") }}
                 </BaseBadge>
-                <div class="flex gap-1">
-                  <BaseButton variant="ghost" size="sm" @click="edit(question)">
-                    {{ t("admin.papers.edit") }}
-                  </BaseButton>
-                  <BaseButton
-                    variant="ghost"
-                    size="sm"
-                    @click="remove(question)"
-                  >
-                    {{ t("admin.questions.delete") }}
-                  </BaseButton>
-                </div>
+              </div>
+
+              <p class="whitespace-pre-wrap text-sm font-medium text-ink">
+                {{ question.prompt }}
+              </p>
+
+              <ul class="mt-2 space-y-1">
+                <li
+                  v-for="option in question.options"
+                  :key="option.id"
+                  class="flex items-start gap-2 text-xs"
+                  :class="
+                    option.isCorrect
+                      ? 'font-medium text-success-fg'
+                      : 'text-muted'
+                  "
+                >
+                  <Icon
+                    v-if="option.isCorrect"
+                    name="checkCircle"
+                    class="mt-0.5 size-3.5 shrink-0"
+                  />
+                  <span v-else class="mt-0.5 size-3.5 shrink-0"></span>
+                  <span class="whitespace-pre-wrap">{{ option.label }}</span>
+                </li>
+              </ul>
+
+              <p
+                v-if="question.explanation"
+                class="mt-2 whitespace-pre-wrap border-l-2 border-subtle pl-2 text-xs text-faint"
+              >
+                {{ question.explanation }}
+              </p>
+            </div>
+
+            <div class="flex shrink-0 items-center gap-0.5">
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                icon-only
+                :loading="busyId === question.id"
+                :title="
+                  question.status === 1
+                    ? t('admin.questions.disable')
+                    : t('admin.questions.enable')
+                "
+                @click="toggle(question)"
+              >
+                <template #icon>
+                  <Icon
+                    :name="question.status === 1 ? 'checkCircle' : 'xCircle'"
+                    class="size-4"
+                  />
+                </template>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                icon-only
+                :title="t('admin.questions.duplicate')"
+                @click="duplicate(question)"
+              >
+                <template #icon><Icon name="plus" class="size-4" /></template>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                icon-only
+                :title="t('admin.papers.edit')"
+                @click="edit(question)"
+              >
+                <template #icon>
+                  <Icon name="pencilSquare" class="size-4" />
+                </template>
+              </BaseButton>
+              <BaseButton
+                variant="ghost"
+                size="sm"
+                icon-only
+                :title="t('admin.questions.delete')"
+                @click="deleting = question"
+              >
+                <template #icon><Icon name="xMark" class="size-4" /></template>
+              </BaseButton>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </template>
+
+    <!-- 编辑器做成对话框而不是就地展开：一份五十题的卷子里就地展开的表单，人滚
+         两下就找不到自己在改哪一道了。 -->
+    <BaseDialog
+      v-model:open="editorOpen"
+      :title="
+        editingId
+          ? t('admin.questions.editTitle')
+          : t('admin.questions.addTitle')
+      "
+      :close-label="t('admin.paper.cancel')"
+      size="lg"
+    >
+      <div class="space-y-4">
+        <AlertBox v-if="error" variant="danger">{{ error }}</AlertBox>
+
+        <!-- 改一道**启用中**的题会给选项换新 id，正在作答的人那道题会判错。新建
+             和改停用的题都没有这个问题，所以只在这一种情况下说。 -->
+        <AlertBox
+          v-if="editingId && editingQuestion?.status === 1"
+          variant="warning"
+        >
+          {{ t("admin.questions.editWarning") }}
+        </AlertBox>
+
+        <BaseTextarea
+          :model-value="draft.prompt"
+          :label="t('admin.questions.prompt')"
+          :placeholder="t('admin.questions.promptPlaceholder')"
+          required
+          :rows="3"
+          @update:model-value="(value: string) => (draft.prompt = value)"
+        />
+
+        <div>
+          <label
+            for="question-category"
+            class="mb-1.5 block text-sm font-medium text-ink"
+          >
+            {{ t("admin.questions.category") }}
+          </label>
+          <!-- datalist 而不是纯下拉：既要能选已有的，也要能打一个新的。纯下拉挡
+               住后者；纯文本框会让「无线电」和「无线电通话」变成两个分类。 -->
+          <input
+            id="question-category"
+            class="input w-full"
+            list="bank-categories"
+            :value="draft.category"
+            :placeholder="t('admin.questions.categoryPlaceholder')"
+            @input="
+              (event) =>
+                (draft.category = (event.target as HTMLInputElement).value)
+            "
+          />
+          <datalist id="bank-categories">
+            <option
+              v-for="category in categories"
+              :key="category"
+              :value="category"
+            ></option>
+          </datalist>
+          <p class="mt-1 text-xs text-muted">
+            {{ t("admin.questions.categoryHelp") }}
+          </p>
+        </div>
+
+        <fieldset>
+          <legend class="text-sm font-medium text-ink">
+            {{ t("admin.questions.options") }}
+          </legend>
+          <p class="mt-0.5 text-xs text-muted">
+            {{ t("admin.questions.markOne") }}
+          </p>
+
+          <div class="mt-2 space-y-2">
+            <div
+              v-for="(option, index) in draft.options"
+              :key="index"
+              class="flex items-start gap-2"
+            >
+              <label
+                class="mt-2 flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-muted"
+              >
+                <input
+                  type="radio"
+                  name="correct-option"
+                  :checked="option.isCorrect"
+                  class="size-4 accent-[var(--color-airwaysn)]"
+                  @change="markCorrect(index)"
+                />
+                {{ t("admin.questions.correct") }}
+              </label>
+              <!-- textarea 而不是 input：选项也会长（「以上所有」很短，但整句的
+                   程序名和高度限制不短），单行框里只看得见结尾。 -->
+              <textarea
+                :value="option.label"
+                class="input w-full flex-1 resize-y"
+                rows="1"
+                :placeholder="
+                  t('admin.questions.optionPlaceholder', { number: index + 1 })
+                "
+                @input="
+                  (event) =>
+                    setOption(
+                      index,
+                      (event.target as HTMLTextAreaElement).value,
+                    )
+                "
+              ></textarea>
+              <button
+                v-if="draft.options.length > 2"
+                type="button"
+                class="mt-1.5 rounded-control p-1.5 text-faint hover:bg-surface-sunken hover:text-ink"
+                :aria-label="t('admin.questions.removeOption')"
+                @click="removeOption(index)"
+              >
+                <Icon name="xMark" class="size-4" />
+              </button>
+            </div>
+          </div>
+
+          <BaseButton variant="ghost" size="sm" class="mt-2" @click="addOption">
+            <template #icon><Icon name="plus" class="size-4" /></template>
+            {{ t("admin.questions.addOption") }}
+          </BaseButton>
+        </fieldset>
+
+        <BaseTextarea
+          :model-value="draft.explanation"
+          :label="t('admin.questions.explanation')"
+          :hint="t('admin.questions.explanationHelp')"
+          :rows="2"
+          @update:model-value="(value: string) => (draft.explanation = value)"
+        />
+
+        <BaseToggle
+          :model-value="draft.enabled"
+          :label="t('admin.questions.enabled')"
+          :description="t('admin.questions.enabledHelp')"
+          @update:model-value="(value: boolean) => (draft.enabled = value)"
+        />
+
+        <!-- 预览。作者总把正确答案放在第一个，很容易忘记考生看到的不是这个顺序。 -->
+        <div class="rounded-card border border-subtle">
+          <button
+            type="button"
+            class="flex w-full items-center justify-between px-3 py-2 text-sm text-muted hover:text-ink"
+            @click="previewing = !previewing"
+          >
+            <span class="flex items-center gap-1.5">
+              <Icon name="sparkles" class="size-4" />
+              {{ t("admin.questions.preview") }}
+            </span>
+            <Icon
+              :name="previewing ? 'chevronDown' : 'chevronRight'"
+              class="size-4"
+            />
+          </button>
+
+          <div v-if="previewing" class="border-t border-subtle p-3">
+            <div class="mb-2 flex items-center justify-between gap-2">
+              <p class="text-xs text-faint">
+                {{ t("admin.questions.previewHint") }}
+              </p>
+              <button
+                type="button"
+                class="link shrink-0 text-xs"
+                @click="previewSeed++"
+              >
+                {{ t("admin.questions.reshuffle") }}
+              </button>
+            </div>
+            <p class="whitespace-pre-wrap text-sm font-semibold text-ink">
+              {{ draft.prompt || t("admin.questions.promptPlaceholder") }}
+            </p>
+            <div class="mt-3 space-y-2">
+              <div
+                v-for="(label, index) in previewOptions"
+                :key="index"
+                class="flex items-start gap-3 rounded-control border border-subtle p-2.5 text-sm"
+              >
+                <span
+                  class="mt-0.5 size-4 shrink-0 rounded-full border border-strong"
+                ></span>
+                <span class="whitespace-pre-wrap text-ink">{{ label }}</span>
               </div>
             </div>
-          </li>
-        </ul>
-      </section>
-    </template>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <p v-if="draftIssue" class="mr-auto text-xs text-warning-fg">
+          {{ draftIssue }}
+        </p>
+        <BaseButton variant="ghost" @click="editorOpen = false">
+          {{ t("admin.paper.cancel") }}
+        </BaseButton>
+        <BaseButton :loading="saving" :disabled="!!draftIssue" @click="save">
+          {{ saving ? t("admin.paper.saving") : t("admin.questions.save") }}
+        </BaseButton>
+      </template>
+    </BaseDialog>
+
+    <!-- 删除确认。window.confirm 用不上本站的语言和样式，而这是一个不可撤销的
+         动作，值得一个能把题面写出来的框 —— 删错一道题的代价是重打一遍。 -->
+    <BaseDialog
+      :open="!!deleting"
+      :title="t('admin.questions.deleteTitle')"
+      :close-label="t('admin.paper.cancel')"
+      size="sm"
+      @update:open="
+        (open: boolean) => {
+          if (!open) deleting = null;
+        }
+      "
+    >
+      <p class="text-sm text-muted">{{ t("admin.questions.deleteConfirm") }}</p>
+      <p
+        v-if="deleting"
+        class="mt-3 whitespace-pre-wrap rounded-control bg-surface-sunken p-3 text-sm text-ink"
+      >
+        {{ deleting.prompt }}
+      </p>
+      <template #footer>
+        <BaseButton variant="ghost" @click="deleting = null">
+          {{ t("admin.paper.cancel") }}
+        </BaseButton>
+        <BaseButton
+          variant="danger"
+          :loading="busyId === deleting?.id"
+          @click="confirmDelete"
+        >
+          {{ t("admin.questions.delete") }}
+        </BaseButton>
+      </template>
+    </BaseDialog>
   </div>
 </template>
