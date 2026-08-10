@@ -1,0 +1,30 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 出镜像 + 滚 Deployment，走组织里那份可复用工作流，和别的 JYL 项目一个形状。
+#
+# manifest 传进去是因为它会先 apply 一次：光 set image 要求 Deployment 已经存
+# 在，第一次部署（这个仓库就是）会直接失败。
+#
+# 权限要在**调用方**声明：可复用工作流里的 permissions 是它需要什么，不是它能
+# 拿到什么。仓库默认的 GITHUB_TOKEN 只有 packages: read / deployments: none，
+# 于是会被拒在启动阶段 —— 而 startup_failure 是拿不到日志的，只在网页上写一行
+# "requesting 'deployments: write, packages: write'"。can-radar 踩过这一次。
+permissions:
+  contents: read
+  packages: write
+  deployments: write
+
+jobs:
+  deploy:
+    uses: JianyueLab-Org/actions/.github/workflows/deploy-k8s.yml@main
+    with:
+      image: ghcr.io/jianyuelab-org/can-exam
+      namespace: can-exam
+      manifest: deploy/k8s.yaml
+      environment_url: https://exam.airwaysn.org
+    secrets: inherit

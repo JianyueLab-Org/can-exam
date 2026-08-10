@@ -1,0 +1,77 @@
+# can-exam
+
+Cerulean Aviation Network 的**考试中心** —— `exam.airwaysn.org`。
+
+入网测试和各席位的理论考试在这里进行。题目从题库里**随机抽取**，每道题的选项顺
+序**每次都打乱**，所以两个人同时开考拿到的不是同一张卷子。
+
+Astro SSR + Vue 岛屿 + Tailwind v4，和 can-dev、can-radar 同一套。
+
+## 它做什么，不做什么
+
+**做：** 列出你能考的卷子、把抽好的卷子画出来、收答案、显示成绩；SUP/ADM 还能在
+`/admin` 里管理题库（增删改题、设抽题数、及格线、等级门槛、通过后的升级）。
+
+**不做：**
+
+- **没有登录。** 会话 cookie 是 can-api 签的、Domain 是父域，浏览器本来就带过
+  来了；这个站点只是认得出来。登录入口只有主站一个。
+- **没有数据库。** 题库、卷子、成绩全在 can-api 的 MySQL 里。
+- **没有答案。** 发下来的卷子是 can-api 去掉答案之后的那一份。判卷也在那边。
+
+## 跑起来
+
+```bash
+bun install
+bun run dev          # http://localhost:4324
+```
+
+`.env.example` 复制成 `.env`。本地开发一般只需要改一处：如果主站也在本地跑，把
+`CAN_WEB_ORIGIN` 指到 `http://localhost:4321`，否则页眉上的「登录」会把你送到线
+上去。
+
+| 变量             | 作用                                                      |
+| ---------------- | --------------------------------------------------------- |
+| `CAN_API_ORIGIN` | 数据层。题库、发卷、判卷、会话都问它                      |
+| `CAN_WEB_ORIGIN` | 主站。页眉导航和唯一的登录入口                            |
+| `PUBLIC_ORIGIN`  | 本站对外地址，只用来校验写操作的 Origin。**部署里必须设** |
+
+门禁：
+
+```bash
+bun run lint         # prettier --check + astro check + vue-tsc
+bun run build
+```
+
+## 页面
+
+| 地址          | 是什么                                            |
+| ------------- | ------------------------------------------------- |
+| `/`           | 能考什么 + 我的成绩                               |
+| `/sit/<slug>` | 考场。`?token=` 指向一张已经抽好的卷子            |
+| `/admin`      | 题库管理：卷子清单（SUP/ADM）                     |
+| `/admin/<id>` | 一份卷子的题目（SUP/ADM，**这一页显示正确答案**） |
+
+## 第一次上线
+
+题库在 can-api 那边，所以顺序是：
+
+```bash
+# 在 can-api 仓库里
+export DATABASE_URL='mysql://…'
+bunx prisma db push --schema prisma/schema.prisma   # 四张新表
+go run ./cmd/seed-exam                              # 把入网测试灌进题库
+
+# 回到这里
+kubectl apply -f deploy/k8s.yaml
+```
+
+跳过 `seed-exam` 站点也起得来，只是一场考试都列不出来 —— 题库是空的。
+
+## 和 can-web 的关系
+
+can-web 的 `/exams/*` 还在原样跑着，调的是 can-api 那条固定卷路由。两套并行，等
+这边稳定之后再谈迁移。
+
+更深的东西在 `CLAUDE.md`：为什么一张卷子只能交一次、为什么发卷是 POST、为什么这
+一侧一次授权判断都不做。

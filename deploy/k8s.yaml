@@ -1,0 +1,134 @@
+# 考试中心在 jyl-tyo 上的部署。
+#
+# 形状和 can-dev / can-radar / llm-web 一致：一个应用一个 namespace，Deployment
+# 和 Service 都叫 app，Service 暴露 80，Ingress 走默认的 cloudflare-tunnel
+# （控制器会把 exam.airwaysn.org 的 DNS 记录建好，TLS 在 Cloudflare 终止，所以
+# 这里没有 cert-manager 注解、也没有 tls: 段）。
+#
+# ---------------------------------------------------------------------------
+# 上线之前有一步不在这份清单里
+# ---------------------------------------------------------------------------
+#
+# 题库在 can-api 的 MySQL 里，这个站点一行数据都不存。所以顺序是：
+#
+#   1. 在 can-api 那边 `prisma db push`（新增四张表：examPaper / examQuestion
+#      / examOption / examAttemptPaper）
+#   2. 在 can-api 那边 `go run ./cmd/seed-exam`，把硬编码那份入网测试灌进题库
+#   3. 才轮到这份清单
+#
+# 跳过第 2 步的话这个站点起得来，但一场考试都列不出来 —— 页面会显示「这里还没
+# 有开放的考试」，那不是故障，是题库真的空着。
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: can-exam
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: can-exam
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: can-exam
+  template:
+    metadata:
+      labels:
+        app: can-exam
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/jianyuelab-org/can-exam:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4321
+          env:
+            # 数据层。题库、发卷、判卷、成绩、以及「这枚 cookie 是谁」全都问
+            # 它。这个站点自己不验会话签名 —— SESSION_SECRET 不该在这个部署里
+            # 多存一份，省下的只是一次内网 HTTP。
+            - name: CAN_API_ORIGIN
+              value: https://api.airwaysn.org
+            # 主站。页眉那排导航和唯一的登录入口指向它 —— 这里是另一个源，写相
+            # 对路径会打在 exam.airwaysn.org 上然后 404。
+            - name: CAN_WEB_ORIGIN
+              value: https://airwaysn.org
+            # 本站自己的对外地址，用来校验写操作的 Origin。
+            #
+            # **不能省。** 省掉的话它是开发机的 localhost，而浏览器发来的是
+            # https://exam.airwaysn.org，两者对不上 —— 于是发卷和交卷会稳定地
+            # 403，而交卷是这个站点最不能坏的一个动作。它是显式配置而不是从
+            # Host 头推的：这个 Pod 前面是 cloudflare-tunnel，请求头里的东西正
+            # 是那一层能改的（Astro 自带的 checkOrigin 也是因此关掉的）。
+            - name: PUBLIC_ORIGIN
+              value: https://exam.airwaysn.org
+          # 首页在没有会话时不碰 can-api（`readMember` 见到没 cookie 就直接返
+          # 回 null），所以探针只证明这个进程活着，**不**证明上游可用。can-api
+          # 挂了的时候这一页照样 200，只是登录之后一场考试都列不出来。
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4321
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4321
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              # 没有导航数据、没有地图、没有本地数据集 —— 常驻只有 Node 加一份
+              # SSR 运行时，比雷达那边省得多。
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+          # 这四条是 PodSecurity 的 restricted 档要的。镜像里本来就是非 root 在
+          # 跑，但那是镜像的事，集群看不见。
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            # 必须是数字：kubelet 解析不了 USER 名字，写名字会以「无法确认不是
+            # root」为由 CreateContainerConfigError。1000 是 node 镜像里 node
+            # 用户的 uid。
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  namespace: can-exam
+spec:
+  selector:
+    app: can-exam
+  ports:
+    - port: 80
+      targetPort: 4321
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: can-exam
+  namespace: can-exam
+spec:
+  ingressClassName: cloudflare-tunnel
+  rules:
+    - host: exam.airwaysn.org
+      http:
+        paths:
+          - backend:
+              service:
+                name: app
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix

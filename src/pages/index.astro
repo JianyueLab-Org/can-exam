@@ -1,0 +1,55 @@
+---
+/**
+ * 考试中心首页。
+ *
+ * 卷子清单和成绩单都在**服务端**读好，当作 prop 传进岛屿 —— 这一页上不该出现
+ * 「先画一个骨架再填内容」。两次上游调用并发发出，串行的话首字节要等两趟。
+ *
+ * 没登录不是错误：`readMember` 返回 null，岛屿画一句「请先登录」加一个跳回主
+ * 站的链接。这个站点没有密码表单，登录入口只有主站一个。
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import ExamCentre from "@/components/ExamCentre.vue";
+import { getLocale, getMessages } from "@/lib/i18n";
+import type { AttemptRecord, PaperSummary } from "@/lib/exams";
+import { webOrigin } from "@/server/config";
+import { readMember } from "@/server/session";
+import { readApi } from "@/server/upstream";
+
+const locale = getLocale(Astro.cookies);
+// 整本字典，不是某一个命名空间：这个岛屿要读 home.*、frame.* 和 sit.error.*
+// 三处 —— 交卷失败的那几个码是发卷时就可能撞上的。
+const messages = getMessages(locale);
+
+const member = await readMember(Astro);
+
+let papers: PaperSummary[] = [];
+let records: AttemptRecord[] = [];
+if (member) {
+  const [paperList, history] = await Promise.all([
+    readApi<{ data?: { papers: PaperSummary[] } }>(
+      Astro,
+      "/api/v1/pilot/exam/papers",
+    ),
+    readApi<{ data?: { records: AttemptRecord[] } }>(
+      Astro,
+      "/api/v1/pilot/exam",
+    ),
+  ]);
+  papers = paperList?.data?.papers ?? [];
+  records = history?.data?.records ?? [];
+}
+
+const signInHref = `${webOrigin()}/signin?callbackUrl=${encodeURIComponent(Astro.url.href)}`;
+---
+
+<BaseLayout member={member} active="exams">
+  <ExamCentre
+    messages={messages}
+    papers={papers}
+    records={records}
+    signedOut={!member}
+    signInHref={signInHref}
+    client:load
+  />
+</BaseLayout>

@@ -1,0 +1,62 @@
+---
+/**
+ * 考试中心的外壳。
+ *
+ * 没有 can-web 那套 AppShell 的侧栏：这个站点只有三个地方可去（考试、题库管
+ * 理、主站），一个页眉装得下，而在手机上考试的人不需要一条占掉三分之一屏幕的
+ * 导航。
+ *
+ * 会话在**服务端**读好传进页眉，而不是让岛屿挂载后自己去问：首屏就把「你是
+ * 谁」画对，页眉不会先闪一下「登录」再变成名字。
+ */
+import "@/styles/globals.css";
+import ThemeScript from "@/components/ThemeScript.astro";
+import SiteHeader from "@/components/SiteHeader.vue";
+import { getLocale, getMessages } from "@/lib/i18n";
+import type { Member } from "@/lib/member";
+import { webOrigin } from "@/server/config";
+
+interface Props {
+  title?: string;
+  member: Member | null;
+  /** 高亮页眉上的哪一项。 */
+  active?: "exams" | "admin";
+}
+
+const { title, member, active = "exams" } = Astro.props;
+
+const locale = getLocale(Astro.cookies);
+const messages = getMessages(locale, "frame");
+const pageTitle = title
+  ? `${title} · Cerulean Aviation Network`
+  : "考试中心 · Cerulean Aviation Network";
+---
+
+<!doctype html>
+<html lang={locale} class="antialiased">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <title>{pageTitle}</title>
+    <meta name="theme-color" content="#4c92c1" />
+    {/* 考试页面不该出现在搜索结果里，也不该被抓。 */}
+    <meta name="robots" content="noindex, nofollow" />
+    <ThemeScript />
+  </head>
+  <body class="min-h-dvh bg-surface text-ink">
+    <SiteHeader
+      messages={messages}
+      locale={locale}
+      member={member}
+      active={active}
+      siteOrigin={webOrigin()}
+      client:load
+    />
+    <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <slot />
+    </main>
+  </body>
+</html>

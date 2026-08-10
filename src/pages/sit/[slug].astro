@@ -1,0 +1,55 @@
+---
+/**
+ * 考场。
+ *
+ * 地址上带 `?token=` 时，卷子在服务端取好传进去 —— 刷新页面回到同一张卷子，
+ * 题目和选项顺序都不变。不带 token 时这里**不发卷**：发卷是一次写操作，用
+ * GET 表达它意味着一次预取或者一次爬虫就能替人抽走一张卷子。岛屿挂载后自己
+ * POST 一次，然后把 token 补进地址栏。
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SitPaper from "@/components/SitPaper.vue";
+import { getLocale, getMessages } from "@/lib/i18n";
+import type { Sitting } from "@/lib/exams";
+import { readMember } from "@/server/session";
+import { callApi } from "@/server/upstream";
+
+const { slug } = Astro.params;
+const locale = getLocale(Astro.cookies);
+const messages = getMessages(locale);
+
+const member = await readMember(Astro);
+if (!member) {
+  // 没登录就没有卷子可谈。回首页，那里有登录入口和说明。
+  return Astro.redirect("/", 302);
+}
+
+const token = Astro.url.searchParams.get("token");
+
+let sitting: Sitting | null = null;
+let loadError: string | null = null;
+if (token) {
+  const result = await callApi(
+    Astro,
+    `/api/v1/pilot/exam/sittings/${encodeURIComponent(token)}`,
+  );
+  try {
+    const body = JSON.parse(result.body);
+    if (result.status >= 200 && result.status < 300)
+      sitting = body.data as Sitting;
+    else loadError = String(body.error ?? result.status);
+  } catch {
+    loadError = "upstream_unreachable";
+  }
+}
+---
+
+<BaseLayout title={sitting?.paper.title} member={member} active="exams">
+  <SitPaper
+    messages={messages}
+    slug={slug ?? ""}
+    sitting={sitting}
+    loadError={loadError}
+    client:load
+  />
+</BaseLayout>

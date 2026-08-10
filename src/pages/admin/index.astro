@@ -1,0 +1,37 @@
+---
+/**
+ * 题库管理：卷子清单。
+ *
+ * 这里读的是 `/api/v1/super/exam/papers`，上游挂在 `WithSup` 后面。**这一页
+ * 不自己判断权限** —— 读不到就是 `forbidden`，岛屿显示一句「没有权限」。理由
+ * 见 `src/pages/api/v1/admin/papers.ts`：两处各判一次的话，两处会慢慢长得不
+ * 一样，而更宽松的那一处就是实际生效的那一处。
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import BankPapers from "@/components/BankPapers.vue";
+import { getLocale, getMessages } from "@/lib/i18n";
+import type { AdminPaper } from "@/lib/admin";
+import { readMember } from "@/server/session";
+import { readApi } from "@/server/upstream";
+
+const locale = getLocale(Astro.cookies);
+const messages = getMessages(locale);
+
+const member = await readMember(Astro);
+const response = member
+  ? await readApi<{ data?: { papers: AdminPaper[] } }>(
+      Astro,
+      "/api/v1/super/exam/papers",
+    )
+  : null;
+const papers = response?.data?.papers ?? [];
+---
+
+<BaseLayout title="题库管理" member={member} active="admin">
+  <BankPapers
+    messages={messages}
+    papers={papers}
+    forbidden={!response}
+    client:load
+  />
+</BaseLayout>

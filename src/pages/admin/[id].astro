@@ -1,0 +1,56 @@
+---
+/**
+ * 一份卷子的题库。
+ *
+ * **这是全站唯一会把正确答案渲染出来的页面。** 它和考生那一侧走的是两条不同
+ * 的上游路径、两个不同的 TypeScript 类型（`lib/admin.ts` 对 `lib/exams.ts`），
+ * 这一点是有意维持的：类型不共享，「在考生页面上顺手读一下 isCorrect」就编译
+ * 不过，而不是在运行时悄悄拿到 undefined。
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import BankQuestions from "@/components/BankQuestions.vue";
+import { getLocale, getMessages } from "@/lib/i18n";
+import type { AdminPaper, AdminQuestion } from "@/lib/admin";
+import { readMember } from "@/server/session";
+import { readApi } from "@/server/upstream";
+
+const { id } = Astro.params;
+const locale = getLocale(Astro.cookies);
+const messages = getMessages(locale);
+
+const member = await readMember(Astro);
+
+let paper: AdminPaper | null = null;
+let questions: AdminQuestion[] = [];
+let forbidden = true;
+
+if (member) {
+  // 卷子清单和题目一起读：上游没有「按 id 读一份卷子」的管理端路由，卷子的元
+  // 信息（抽题数、标题）只有在清单里。多读几行，省一条路由。
+  const [papers, bank] = await Promise.all([
+    readApi<{ data?: { papers: AdminPaper[] } }>(
+      Astro,
+      "/api/v1/super/exam/papers",
+    ),
+    readApi<{ data?: { questions: AdminQuestion[] } }>(
+      Astro,
+      `/api/v1/super/exam/papers/${encodeURIComponent(id ?? "")}/questions`,
+    ),
+  ]);
+  if (papers) {
+    forbidden = false;
+    paper = papers.data?.papers.find((item) => String(item.id) === id) ?? null;
+    questions = bank?.data?.questions ?? [];
+  }
+}
+---
+
+<BaseLayout title={paper?.title ?? "题库管理"} member={member} active="admin">
+  <BankQuestions
+    messages={messages}
+    paper={paper}
+    questions={questions}
+    forbidden={forbidden}
+    client:load
+  />
+</BaseLayout>
