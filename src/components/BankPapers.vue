@@ -328,129 +328,188 @@ async function remove(paper: AdminPaper) {
       :close-label="t('admin.paper.cancel')"
       size="lg"
     >
-      <div class="space-y-4">
-        <BaseInput
-          v-model="draft.title"
-          :label="t('admin.paper.name')"
-          required
-        />
-        <BaseInput
-          v-model="draft.slug"
-          :label="t('admin.paper.slug')"
-          :hint="t('admin.paper.slugHelp')"
-          required
-        />
-        <BaseInput
-          v-model="draft.description"
-          :label="t('admin.paper.description')"
-        />
+      <!-- 十二个字段一列排下来，人得读完才知道哪几个是一组的。切成四节之后，
+           「这份卷子叫什么」「谁能改、谁能考」「怎么抽怎么判」「发不发」各自成
+           块，找一个设置不用从头看。 -->
+      <div class="space-y-7">
+        <section class="space-y-4">
+          <h3
+            class="text-xs font-semibold uppercase tracking-widest text-faint"
+          >
+            {{ t("admin.paper.sectionBasics") }}
+          </h3>
 
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div>
+          <BaseInput
+            v-model="draft.title"
+            :label="t('admin.paper.name')"
+            required
+          />
+          <div class="grid gap-4 sm:grid-cols-2">
+            <BaseInput
+              v-model="draft.slug"
+              :label="t('admin.paper.slug')"
+              :hint="t('admin.paper.slugHelp')"
+              required
+            />
+            <BaseSelect
+              :model-value="draft.scope"
+              :label="t('admin.paper.scope')"
+              :options="scopeOptions"
+              :hint="t('admin.paper.scopeHelp')"
+              @update:model-value="
+                (value: string) => (draft.scope = value as ExamScope)
+              "
+            />
+          </div>
+          <BaseInput
+            v-model="draft.description"
+            :label="t('admin.paper.description')"
+            :hint="t('admin.paper.descriptionHelp')"
+          />
+        </section>
+
+        <section class="space-y-4">
+          <h3
+            class="text-xs font-semibold uppercase tracking-widest text-faint"
+          >
+            {{ t("admin.paper.sectionAccess") }}
+          </h3>
+
+          <!-- 每个字段的说明都由控件自己渲染（BaseSelect 现在有 hint 了）。
+               之前 division 的说明是挂在控件外面的一个 <p>，于是这一格比隔壁高
+               出两行，两列就错开了。 -->
+          <div class="grid gap-4 sm:grid-cols-2">
             <BaseSelect
               :model-value="String(draft.region)"
               :label="t('admin.paper.division')"
               :options="regionOptions"
+              :hint="t('admin.paper.divisionHelp')"
               @update:model-value="
                 (value: string | number) => (draft.region = Number(value))
               "
             />
-            <p class="mt-1 text-xs text-muted">
-              {{ t("admin.paper.divisionHelp") }}
-            </p>
-          </div>
-
-          <BaseSelect
-            :model-value="draft.scope"
-            :label="t('admin.paper.scope')"
-            :options="scopeOptions"
-            @update:model-value="
-              (value: string) => (draft.scope = value as ExamScope)
-            "
-          />
-
-          <div>
             <BaseSelect
               :model-value="
                 draft.promoteTo === null ? '' : String(draft.promoteTo)
               "
               :label="t('admin.paper.promoteTo')"
               :options="promoteOptions"
+              :hint="t('admin.paper.promoteHelp')"
               @update:model-value="setPromoteTo"
             />
-            <p class="mt-1 text-xs text-muted">
-              {{ t("admin.paper.promoteHelp") }}
-            </p>
           </div>
+
+          <fieldset>
+            <div class="flex flex-wrap items-baseline justify-between gap-2">
+              <legend class="text-sm font-medium text-ink">
+                {{ t("admin.paper.eligibleRatings") }}
+              </legend>
+              <button
+                v-if="(draft.eligibleRatings ?? []).length"
+                type="button"
+                class="link text-xs"
+                @click="draft.eligibleRatings = []"
+              >
+                {{ t("admin.paper.eligibleClear") }}
+              </button>
+            </div>
+
+            <!-- 一排全未选中的描边药丸看不出是可点的，所以把当前状态用一句话说
+                 出来：留空时明说「任何成员都能考」，选了就把选中的列出来。 -->
+            <p class="mt-0.5 text-xs text-muted">
+              {{
+                (draft.eligibleRatings ?? []).length
+                  ? t("admin.paper.eligibleSome", {
+                      ratings: (draft.eligibleRatings ?? [])
+                        .map((id) => ratingName(id))
+                        .join(" / "),
+                    })
+                  : t("admin.paper.eligibleHelp")
+              }}
+            </p>
+
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <label
+                v-for="rating in allRatings()"
+                :key="rating.id"
+                :class="[
+                  'flex cursor-pointer items-center gap-1 rounded-control border px-2.5 py-1 text-xs transition-colors',
+                  (draft.eligibleRatings ?? []).includes(rating.id)
+                    ? 'border-airwaysn bg-info-bg font-medium text-ink'
+                    : 'border-subtle text-muted hover:border-strong hover:bg-surface-sunken hover:text-ink',
+                ]"
+              >
+                <input
+                  type="checkbox"
+                  class="sr-only"
+                  :checked="(draft.eligibleRatings ?? []).includes(rating.id)"
+                  @change="toggleRating(rating.id)"
+                />
+                <Icon
+                  v-if="(draft.eligibleRatings ?? []).includes(rating.id)"
+                  name="checkCircle"
+                  class="size-3.5"
+                />
+                {{ rating.name }}
+              </label>
+            </div>
+          </fieldset>
+        </section>
+
+        <section class="space-y-4">
+          <h3
+            class="text-xs font-semibold uppercase tracking-widest text-faint"
+          >
+            {{ t("admin.paper.sectionDrawing") }}
+          </h3>
 
           <!-- 三个数字字段都走 :model-value + 显式 Number()，而不是 v-model：
                BaseInput 发出来的永远是 string，v-model 到一个 number 上会把
                draft 里的类型悄悄换掉，然后 `drawCount: 0` 和 `drawCount: "0"`
                在别处表现得不一样。 -->
-          <BaseInput
-            :model-value="draft.drawCount"
-            type="number"
-            :label="t('admin.paper.drawCount')"
-            :hint="t('admin.paper.drawHelp')"
-            @update:model-value="
-              (value: string) => (draft.drawCount = Number(value) || 0)
-            "
-          />
-          <BaseInput
-            :model-value="draft.passMark"
-            type="number"
-            :label="t('admin.paper.passMark')"
-            @update:model-value="
-              (value: string) => (draft.passMark = Number(value) || 0)
-            "
-          />
-          <BaseInput
-            :model-value="draft.timeLimit"
-            type="number"
-            :label="t('admin.paper.timeLimit')"
-            :hint="t('admin.paper.timeLimitHelp')"
-            @update:model-value="
-              (value: string) => (draft.timeLimit = Number(value) || 0)
-            "
-          />
-        </div>
-
-        <fieldset>
-          <legend class="text-sm font-medium text-ink">
-            {{ t("admin.paper.eligibleRatings") }}
-          </legend>
-          <p class="mt-0.5 text-xs text-muted">
-            {{ t("admin.paper.eligibleHelp") }}
-          </p>
-          <div class="mt-2 flex flex-wrap gap-1.5">
-            <label
-              v-for="rating in allRatings()"
-              :key="rating.id"
-              :class="[
-                'cursor-pointer rounded-control border px-2.5 py-1 text-xs transition-colors',
-                (draft.eligibleRatings ?? []).includes(rating.id)
-                  ? 'border-airwaysn bg-info-bg text-ink'
-                  : 'border-subtle text-muted hover:border-strong',
-              ]"
-            >
-              <input
-                type="checkbox"
-                class="sr-only"
-                :checked="(draft.eligibleRatings ?? []).includes(rating.id)"
-                @change="toggleRating(rating.id)"
-              />
-              {{ rating.name }}
-            </label>
+          <div class="grid gap-4 sm:grid-cols-3">
+            <BaseInput
+              :model-value="draft.drawCount"
+              type="number"
+              :label="t('admin.paper.drawCount')"
+              :hint="t('admin.paper.drawHelp')"
+              @update:model-value="
+                (value: string) => (draft.drawCount = Number(value) || 0)
+              "
+            />
+            <BaseInput
+              :model-value="draft.passMark"
+              type="number"
+              :label="t('admin.paper.passMark')"
+              :hint="t('admin.paper.passMarkHelp')"
+              @update:model-value="
+                (value: string) => (draft.passMark = Number(value) || 0)
+              "
+            />
+            <BaseInput
+              :model-value="draft.timeLimit"
+              type="number"
+              :label="t('admin.paper.timeLimit')"
+              :hint="t('admin.paper.timeLimitHelp')"
+              @update:model-value="
+                (value: string) => (draft.timeLimit = Number(value) || 0)
+              "
+            />
           </div>
-        </fieldset>
+        </section>
 
-        <BaseToggle
-          :model-value="draft.status === 1"
-          :label="t('admin.paper.publish')"
-          @update:model-value="
-            (value: boolean) => (draft.status = value ? 1 : 0)
-          "
-        />
+        <!-- 开关自己是 justify-between 的，在这么宽的对话框里 label 和滑块会被
+             甩到两头、读起来像两件事。装进一个框里它们才是一个控件。 -->
+        <section class="rounded-card border border-subtle p-4">
+          <BaseToggle
+            :model-value="draft.status === 1"
+            :label="t('admin.paper.publish')"
+            :description="t('admin.paper.publishHelp')"
+            @update:model-value="
+              (value: boolean) => (draft.status = value ? 1 : 0)
+            "
+          />
+        </section>
       </div>
 
       <template #footer>
