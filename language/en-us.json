@@ -92,8 +92,6 @@
     "title": "Question bank",
     "description": "Papers decide who gets which rating, so this is SUP/ADM only.",
     "forbidden": "You may not manage the question bank.",
-    "division": "Division",
-    "divisionHelp": "Decides who may edit this paper: instructors of that division, plus SUP/ADM. Network-wide is SUP/ADM only.",
     "noDivision": "You do not instruct in any division, so there is no bank for you to edit.",
     "scopedTo": "You may edit: {regions}",
     "globalScope": "You may edit every division's bank.",
@@ -143,7 +141,16 @@
       "publish": "Published (visible to members)",
       "save": "Save",
       "saving": "Saving…",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "sectionBasics": "Basics",
+      "sectionAccess": "Ownership and eligibility",
+      "sectionDrawing": "Drawing and marking",
+      "scopeHelp": "Which track it appears under in the exam centre.",
+      "descriptionHelp": "Optional. Shown on the card in the exam centre.",
+      "passMarkHelp": "Reaching this percentage is a pass.",
+      "eligibleClear": "Clear",
+      "eligibleSome": "Only {ratings} may sit this exam.",
+      "publishHelp": "Off means draft: visible to people who can manage the bank, and to nobody else."
     },
     "questions": {
       "title": "Questions",

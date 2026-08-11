@@ -92,11 +92,9 @@
     "title": "題庫管理",
     "description": "卷子決定誰能拿到什麼等級，所以這裡只有 SUP / ADM 能進。",
     "forbidden": "你沒有管理題庫的權限。",
-    "division": "Division",
-    "divisionHelp": "決定誰能改這份卷子：只有這個 division 的教員（和 SUP/ADM）能改。「全網」只有 SUP/ADM 能用。",
-    "noDivision": "你目前不管理任何 division，所以沒有可以編輯的題庫。",
+    "noDivision": "你目前不管理任何分部，所以沒有可以編輯的題庫。",
     "scopedTo": "你能編輯的是：{regions}",
-    "globalScope": "你能編輯全部 division 的題庫。",
+    "globalScope": "你能編輯全部分部的題庫。",
     "grantCeiling": "你寫的卷子最高能授予 {rating}。",
     "grantCeilingNone": "你寫的卷子不能授予任何等級。",
     "back": "返回題庫管理",
@@ -125,8 +123,8 @@
       "titleEdit": "編輯卷子",
       "slug": "位址",
       "slugHelp": "只能用小寫字母、數字和連字號，作答位址是 /sit/<位址>。",
-      "division": "Division",
-      "divisionHelp": "決定誰能改這份卷子：只有這個 division 的教員（和 SUP/ADM）能改。",
+      "division": "分部",
+      "divisionHelp": "決定誰能改這份卷子：只有這個分部的教員（和 SUP/ADM）能改。",
       "name": "名稱",
       "description": "說明",
       "scope": "分欄",
@@ -143,7 +141,16 @@
       "publish": "發布（成員可見）",
       "save": "儲存",
       "saving": "儲存中…",
-      "cancel": "取消"
+      "cancel": "取消",
+      "sectionBasics": "基本",
+      "sectionAccess": "歸屬與資格",
+      "sectionDrawing": "抽題與判分",
+      "scopeHelp": "決定它出現在考試中心的哪一欄。",
+      "descriptionHelp": "選填，顯示在考試中心的卡片上。",
+      "passMarkHelp": "達到這個百分比算通過。",
+      "eligibleClear": "清空",
+      "eligibleSome": "只有 {ratings} 能考這場考試。",
+      "publishHelp": "關掉就是草稿：只有能管理題庫的人看得見，成員看不到。"
     },
     "questions": {
       "title": "題目",
@@ -207,9 +214,9 @@
       "deleteTitle": "刪除這道題？"
     },
     "errors": {
-      "wrong_region": "你只能把卷子放在自己管理的 division 下。",
+      "wrong_region": "你只能把卷子放在自己管理的分部下。",
       "grant_too_high": "卷子不能授予你自己的等級或更高。",
-      "forbidden": "你不管理任何 division。",
+      "forbidden": "你不管理任何分部。",
       "gone": "這道題已經不在了，可能被別人刪了。"
     }
   }
