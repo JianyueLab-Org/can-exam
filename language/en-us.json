@@ -90,8 +90,8 @@
   },
   "admin": {
     "title": "Question bank",
-    "description": "Papers decide who gets which rating, so this is SUP/ADM only.",
-    "forbidden": "You may not manage the question bank.",
+    "description": "Papers decide who gets which rating, so this is instructors and above — each scoped to the divisions they instruct in.",
+    "forbidden": "You may not manage the question bank. It is instructors and above.",
     "noDivision": "You do not instruct in any division, so there is no bank for you to edit.",
     "scopedTo": "You may edit: {regions}",
     "globalScope": "You may edit every division's bank.",
