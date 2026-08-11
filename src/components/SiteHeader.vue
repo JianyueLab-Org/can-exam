@@ -26,6 +26,8 @@ const props = defineProps<{
   member: Member | null;
   active: "exams" | "admin";
   siteOrigin: string;
+  /** 跟着 BaseLayout 的容器宽度走，否则页眉和正文左右对不齐。 */
+  wide?: boolean;
 }>();
 
 const t = createTranslator(props.messages);
@@ -91,7 +93,10 @@ onBeforeUnmount(() =>
 <template>
   <header class="border-b border-subtle bg-chrome">
     <div
-      class="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8"
+      :class="[
+        'mx-auto flex items-center gap-4 px-4 py-3 sm:px-6 lg:px-8',
+        wide ? 'max-w-7xl' : 'max-w-5xl',
+      ]"
     >
       <a href="/" class="flex items-center gap-2.5">
         <img src="/logo.png" alt="" class="size-7" />

@@ -21,9 +21,17 @@ interface Props {
   member: Member | null;
   /** 高亮页眉上的哪一项。 */
   active?: "exams" | "admin";
+  /**
+   * 给管理页用的宽版容器。
+   *
+   * 考生那几页是**读**的：一栏卷子、一张考卷，窄一点反而好读，5xl 正合适。管理
+   * 页是**扫**的 —— 一屏里要看清十几份卷子的状态，卡片排成一行三四个才有意义，
+   * 而 5xl 下四列每张只剩两百来像素，标题和按钮都挤不下。
+   */
+  wide?: boolean;
 }
 
-const { title, member, active = "exams" } = Astro.props;
+const { title, member, active = "exams", wide = false } = Astro.props;
 
 const locale = getLocale(Astro.cookies);
 const messages = getMessages(locale, "frame");
@@ -53,9 +61,15 @@ const pageTitle = title
       member={member}
       active={active}
       siteOrigin={webOrigin()}
+      wide={wide}
       client:load
     />
-    <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <main
+      class:list={[
+        "mx-auto px-4 py-8 sm:px-6 lg:px-8",
+        wide ? "max-w-7xl" : "max-w-5xl",
+      ]}
+    >
       <slot />
     </main>
   </body>
