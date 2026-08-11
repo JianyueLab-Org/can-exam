@@ -78,6 +78,30 @@ const editing = ref(false);
 const draft = ref<AdminPaper>(blankPaper());
 
 /**
+ * 按**分部**分组，不是按分栏。
+ *
+ * 分部是这一页真正的组织轴：它决定谁能改哪份卷子，而这份清单本身就是上游按分部
+ * 过滤过的。按它分组，section 的标题恰好就是「你管得着的这一片」。分栏（飞行员
+ * / 管制员）留在卡片上做徽章 —— 那是给考生分的，考试中心首页已经按它分栏了。
+ *
+ * 「全网」永远排在最前：它只有 SUP/ADM 能碰，而对他们来说那一组是最要紧的。其
+ * 余按 region 编码排，顺序稳定。
+ */
+const sections = computed(() => {
+  const groups = new Map<number, AdminPaper[]>();
+  for (const paper of papers.value) {
+    groups.set(paper.region, [...(groups.get(paper.region) ?? []), paper]);
+  }
+  return [...groups.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([region, items]) => ({
+      region,
+      label: t(`region.${regionKey(region)}`),
+      papers: items.sort((a, b) => a.id - b.id),
+    }));
+});
+
+/**
  * 一份新卷子的初始状态。
  *
  * Division 默认落在**自己管理的第一个**上，而不是 0 —— 对教员来说 0 是个存不
@@ -203,15 +227,30 @@ async function save() {
   }
 }
 
-async function remove(paper: AdminPaper) {
-  if (!window.confirm(t("admin.papers.deleteConfirm", { title: paper.title })))
-    return;
+/**
+ * 删一份卷子要过一个真的确认框，而不是 `window.confirm`。
+ *
+ * 它比删一道题重得多：卷子没了，它下面所有题目和选项跟着没，正在作答的卷子也一
+ * 起清掉（成绩会留着 —— 一场考试下线不该抹掉当初有人通过了它）。而
+ * `window.confirm` 用不上本站的语言和样式，也写不下这句话。
+ */
+const deleting = ref<AdminPaper | null>(null);
+const removing = ref(false);
+
+async function confirmDelete() {
+  const paper = deleting.value;
+  if (!paper) return;
+
+  removing.value = true;
   error.value = null;
   try {
     await api(`/api/v1/admin/papers/${paper.id}`, { method: "DELETE" });
     papers.value = papers.value.filter((item) => item.id !== paper.id);
+    deleting.value = null;
   } catch (err) {
     error.value = describe(err);
+  } finally {
+    removing.value = false;
   }
 }
 </script>
@@ -246,16 +285,38 @@ async function remove(paper: AdminPaper) {
         :title="t('admin.papers.empty')"
       />
 
-      <div v-else class="space-y-3">
-        <BaseCard v-for="paper in papers" :key="paper.id" padding="lg">
-          <div class="flex flex-wrap items-start justify-between gap-4">
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-base font-semibold text-ink">
-                  {{ paper.title }}
-                </h3>
+      <!-- 一份卷子一张卡，按分部分组。列数跟着宽度走：窄屏一列，sm 起两列，
+           lg 三列，2xl 四列 —— 再多列每张就窄到标题要折三行了。 -->
+      <section
+        v-for="section in sections"
+        :key="section.region"
+        class="mb-8 last:mb-0"
+      >
+        <div class="mb-3 flex items-baseline gap-2">
+          <h2
+            class="text-xs font-semibold uppercase tracking-widest text-faint"
+          >
+            {{ section.label }}
+          </h2>
+          <span class="tnum text-xs text-faint">{{
+            section.papers.length
+          }}</span>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <BaseCard
+            v-for="paper in section.papers"
+            :key="paper.id"
+            padding="md"
+          >
+            <!-- 卡片是一个纵向的三段式：头部标识、中间数据、底部操作。用
+                 flex-col + flex-1 让中段撑开，同一行里高矮不齐的卡片底部按钮
+                 仍然对齐 —— 网格里这一点比在列表里明显得多。 -->
+            <div class="flex h-full flex-col">
+              <div class="flex flex-wrap items-center gap-1.5">
                 <BaseBadge
                   :variant="paper.status === 1 ? 'success' : 'neutral'"
+                  size="sm"
                 >
                   {{
                     paper.status === 1
@@ -263,63 +324,103 @@ async function remove(paper: AdminPaper) {
                       : t("admin.papers.draft")
                   }}
                 </BaseBadge>
-                <BaseBadge variant="info">
-                  {{ t(`region.${regionKey(paper.region)}`) }}
+                <!-- 分部已经是 section 的标题了，卡片上换成分栏（飞行员/管制
+                     员）—— 那是这里唯一还看不出来的维度。 -->
+                <BaseBadge variant="info" size="sm">
+                  {{
+                    paper.scope === "controllers"
+                      ? t("home.controllers")
+                      : t("home.pilots")
+                  }}
                 </BaseBadge>
-                <code
-                  class="rounded bg-surface-sunken px-1.5 py-0.5 text-xs text-muted"
-                >
-                  /{{ paper.slug }}
-                </code>
               </div>
 
-              <dl
-                class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted"
-              >
-                <dd class="tnum">
-                  {{ t("admin.papers.bank") }} {{ paper.questionCount }}
-                </dd>
-                <dd class="tnum">
-                  {{ t("admin.papers.draw") }}
-                  {{ paper.drawCount || t("admin.papers.drawAll") }}
-                </dd>
-                <dd class="tnum">
-                  {{ t("admin.papers.passMark") }} {{ paper.passMark }}%
-                </dd>
-                <dd v-if="paper.promoteTo !== null" class="text-airwaysn">
-                  → {{ ratingName(paper.promoteTo) }}
-                </dd>
+              <h3 class="mt-2 line-clamp-2 text-sm font-semibold text-ink">
+                {{ paper.title }}
+              </h3>
+              <code class="mt-1 block truncate text-xs text-faint">
+                /sit/{{ paper.slug }}
+              </code>
+
+              <dl class="mt-3 space-y-1 text-xs text-muted">
+                <div class="flex justify-between gap-2">
+                  <dt>{{ t("admin.papers.bank") }}</dt>
+                  <dd class="tnum text-ink">{{ paper.questionCount }}</dd>
+                </div>
+                <div class="flex justify-between gap-2">
+                  <dt>{{ t("admin.papers.draw") }}</dt>
+                  <dd class="tnum text-ink">
+                    {{ paper.drawCount || t("admin.papers.drawAll") }}
+                  </dd>
+                </div>
+                <div class="flex justify-between gap-2">
+                  <dt>{{ t("admin.papers.passMark") }}</dt>
+                  <dd class="tnum text-ink">{{ paper.passMark }}%</dd>
+                </div>
+                <div
+                  v-if="paper.promoteTo !== null"
+                  class="flex justify-between gap-2"
+                >
+                  <dt>{{ t("admin.paper.promoteTo") }}</dt>
+                  <dd class="text-airwaysn">
+                    {{ ratingName(paper.promoteTo) }}
+                  </dd>
+                </div>
               </dl>
 
               <p
                 v-if="paper.drawCount > paper.questionCount"
-                class="mt-2 text-xs text-warning-fg"
+                class="mt-2 flex items-start gap-1 text-xs text-warning-fg"
               >
+                <Icon
+                  name="exclamationTriangle"
+                  class="mt-0.5 size-3.5 shrink-0"
+                />
                 {{
                   t("admin.papers.shortBank", { count: paper.questionCount })
                 }}
               </p>
-            </div>
 
-            <div class="flex shrink-0 items-center gap-2">
-              <BaseButton
-                as="a"
-                :href="`/admin/${paper.id}`"
-                variant="secondary"
-                size="sm"
+              <!-- mt-auto 把这一条压到卡片底部，不管上面有多少行。 -->
+              <div
+                class="mt-auto flex items-center gap-1 border-t border-subtle pt-3"
               >
-                {{ t("admin.papers.manage") }}
-              </BaseButton>
-              <BaseButton variant="ghost" size="sm" @click="open(paper)">
-                {{ t("admin.papers.edit") }}
-              </BaseButton>
-              <BaseButton variant="ghost" size="sm" @click="remove(paper)">
-                {{ t("admin.papers.delete") }}
-              </BaseButton>
+                <BaseButton
+                  as="a"
+                  :href="`/admin/${paper.id}`"
+                  variant="secondary"
+                  size="sm"
+                  class="flex-1"
+                >
+                  {{ t("admin.papers.manage") }}
+                </BaseButton>
+                <BaseButton
+                  variant="ghost"
+                  size="sm"
+                  icon-only
+                  :title="t('admin.papers.edit')"
+                  @click="open(paper)"
+                >
+                  <template #icon>
+                    <Icon name="pencilSquare" class="size-4" />
+                  </template>
+                </BaseButton>
+                <BaseButton
+                  variant="ghost"
+                  size="sm"
+                  icon-only
+                  :title="t('admin.papers.delete')"
+                  @click="deleting = paper"
+                >
+                  <template #icon
+                    ><Icon name="xMark" class="size-4"
+                  /></template>
+                </BaseButton>
+              </div>
             </div>
-          </div>
-        </BaseCard>
-      </div>
+          </BaseCard>
+        </div>
+      </section>
     </template>
 
     <BaseDialog
@@ -518,6 +619,41 @@ async function remove(paper: AdminPaper) {
         </BaseButton>
         <BaseButton :loading="saving" @click="save">
           {{ saving ? t("admin.paper.saving") : t("admin.paper.save") }}
+        </BaseButton>
+      </template>
+    </BaseDialog>
+
+    <!-- 删一份卷子比删一道题重得多：题目、选项、正在作答的卷子都跟着走（成绩
+         留着 —— 一场考试下线不该抹掉当初有人通过了它）。值得一个能把卷子名字
+         写出来的框。 -->
+    <BaseDialog
+      :open="!!deleting"
+      :title="t('admin.papers.deleteTitle')"
+      :close-label="t('admin.paper.cancel')"
+      size="sm"
+      @update:open="
+        (open: boolean) => {
+          if (!open) deleting = null;
+        }
+      "
+    >
+      <p v-if="deleting" class="text-sm text-muted">
+        {{ t("admin.papers.deleteConfirm", { title: deleting.title }) }}
+      </p>
+      <p
+        v-if="deleting && deleting.questionCount"
+        class="mt-2 text-sm text-warning-fg"
+      >
+        {{
+          t("admin.papers.deleteQuestions", { count: deleting.questionCount })
+        }}
+      </p>
+      <template #footer>
+        <BaseButton variant="ghost" @click="deleting = null">
+          {{ t("admin.paper.cancel") }}
+        </BaseButton>
+        <BaseButton variant="danger" :loading="removing" @click="confirmDelete">
+          {{ t("admin.papers.delete") }}
         </BaseButton>
       </template>
     </BaseDialog>

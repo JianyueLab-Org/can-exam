@@ -116,7 +116,9 @@
       "manage": "問題を管理",
       "delete": "削除",
       "deleteConfirm": "「{title}」とその全問題を削除しますか？受験者の成績は保持されます。",
-      "shortBank": "バンクは {count} 問しかなく、出題数を下回っています"
+      "shortBank": "バンクは {count} 問しかなく、出題数を下回っています",
+      "deleteTitle": "この試験を削除しますか？",
+      "deleteQuestions": "配下の {count} 問も一緒に削除されます。受験者の成績は保持されます。"
     },
     "paper": {
       "titleNew": "試験を作成",

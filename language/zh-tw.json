@@ -116,7 +116,9 @@
       "manage": "管理題目",
       "delete": "刪除",
       "deleteConfirm": "刪除「{title}」及其全部題目？成員已有的成績會保留。",
-      "shortBank": "題庫只有 {count} 題，少於抽題數"
+      "shortBank": "題庫只有 {count} 題，少於抽題數",
+      "deleteTitle": "刪除這份卷子？",
+      "deleteQuestions": "它下面的 {count} 道題目也會一起刪掉。成員已有的成績會保留。"
     },
     "paper": {
       "titleNew": "新增卷子",

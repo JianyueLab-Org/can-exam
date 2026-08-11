@@ -116,7 +116,9 @@
       "manage": "Questions",
       "delete": "Delete",
       "deleteConfirm": "Delete “{title}” and every question on it? Members' recorded results are kept.",
-      "shortBank": "The bank holds only {count} questions — fewer than the draw"
+      "shortBank": "The bank holds only {count} questions — fewer than the draw",
+      "deleteTitle": "Delete this paper?",
+      "deleteQuestions": "Its {count} questions go with it. Members' recorded results are kept."
     },
     "paper": {
       "titleNew": "New paper",

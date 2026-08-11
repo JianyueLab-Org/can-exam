@@ -31,7 +31,7 @@ const papers = response?.data?.papers ?? [];
 const authority = response?.data?.authority ?? null;
 ---
 
-<BaseLayout title="题库管理" member={member} active="admin">
+<BaseLayout title="题库管理" member={member} active="admin" wide>
   <BankPapers
     messages={messages}
     papers={papers}
