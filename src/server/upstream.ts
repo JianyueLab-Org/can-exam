@@ -54,7 +54,19 @@ export interface UpstreamResult {
 export async function callApi(
   context: APIContext,
   path: string,
-  init?: { method?: string; body?: string },
+  init?: {
+    method?: string;
+    body?: string | ArrayBuffer;
+    /**
+     * 覆盖请求的 Content-Type。
+     *
+     * 只有上传题库配图用得上：那一条转发的 body 是图片本身，不是 JSON。默认仍
+     * 然是 application/json，所以其余每一处调用一个字都不用改。
+     */
+    contentType?: string;
+    /** 这一次允许等多久。默认 TIMEOUT_MS。 */
+    timeoutMs?: number;
+  },
 ): Promise<UpstreamResult> {
   const token = context.cookies.get(SESSION_COOKIE)?.value;
 
@@ -65,7 +77,7 @@ export async function callApi(
     headers.Cookie = `${SESSION_COOKIE}=${token}`;
   }
   if (init?.body !== undefined) {
-    headers["Content-Type"] = "application/json";
+    headers["Content-Type"] = init.contentType ?? "application/json";
   }
 
   let response: Response;
@@ -74,7 +86,7 @@ export async function callApi(
       method: init?.method ?? "GET",
       headers,
       body: init?.body,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(init?.timeoutMs ?? TIMEOUT_MS),
     });
   } catch {
     return {

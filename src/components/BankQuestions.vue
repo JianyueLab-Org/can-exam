@@ -21,6 +21,22 @@
  * 它，那道题仍然算数。要的就是这个：否则改一次题库就能让正在考试的人手里的卷子
  * 判不了。
  *
+ * ## 多选题的两条边界
+ *
+ * **允许只有一个正确答案的多选题**，而且那不是漏判。考生端只知道「这题是多
+ * 选」，不知道要选几个 —— 如果多选题一律至少两个答案，那「它是复选框」本身就
+ * 泄露了答案的个数。
+ *
+ * **不允许全部正确。** 上游按 `右/对 − 错/错` 给分，一个错的都没有的话扣分项
+ * 消失，全勾就是满分。
+ *
+ * ## 图片是先传后存的
+ *
+ * 选完文件当场就上传到 R2，拿回一个 cdn 地址填进草稿；点保存才把地址写进题里。
+ * 所以传了图不保存、或者传了又换掉，桶里会留一个没人引的对象。上游从不删除任何
+ * 对象（正在作答的卷子可能还引着它），孤儿就一直留着 —— 几十 KB 换一个不会存到
+ * 一半的表单，这笔账是划算的。
+ *
  * ## 排序为什么只是这一页的事
  *
  * 列表能按分类或题面排，但那**只影响这一页**。发卷时 `exam.Draw` 无论如何都会
@@ -41,6 +57,7 @@ import BaseTextarea from "@/components/ui/BaseTextarea.vue";
 import BaseToggle from "@/components/ui/BaseToggle.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
 import Icon from "@/components/ui/Icon.vue";
+import ImageUpload from "@/components/ui/ImageUpload.vue";
 import PageHeader from "@/components/ui/PageHeader.vue";
 import {
   draftProblem,
@@ -251,23 +268,67 @@ function markCorrect(index: number) {
   }));
 }
 
+/** 多选题：这一个正确与否，各管各的。 */
+function toggleCorrect(index: number) {
+  draft.value.options = draft.value.options.map((option, i) =>
+    i === index ? { ...option, isCorrect: !option.isCorrect } : option,
+  );
+}
+
+/**
+ * 单选 / 多选之间切换。
+ *
+ * 切回单选时**只留第一个正确答案**。不整理的话，一道标了三个正确的题会变成一道
+ * 上游拒收的单选题，而人看到的只是保存时弹出的一句 400 —— 让草稿始终停在一个合
+ * 法状态上，比让人自己去猜哪里不对好。
+ *
+ * 反方向（单选 → 多选）什么都不用动：一个正确答案的多选题是合法的，而且是有用
+ * 的。
+ */
+function setMultiple(multiple: boolean) {
+  draft.value.multiple = multiple;
+  if (multiple) return;
+
+  let kept = false;
+  draft.value.options = draft.value.options.map((option) => {
+    if (option.isCorrect && !kept) {
+      kept = true;
+      return option;
+    }
+    return { ...option, isCorrect: false };
+  });
+  if (!kept && draft.value.options.length) {
+    draft.value.options = draft.value.options.map((option, i) => ({
+      ...option,
+      isCorrect: i === 0,
+    }));
+  }
+}
+
 function setOption(index: number, label: string) {
   draft.value.options = draft.value.options.map((option, i) =>
     i === index ? { ...option, label } : option,
   );
 }
 
+function setOptionImage(index: number, imageUrl: string) {
+  draft.value.options = draft.value.options.map((option, i) =>
+    i === index ? { ...option, imageUrl } : option,
+  );
+}
+
 function addOption() {
   draft.value.options = [
     ...draft.value.options,
-    { label: "", isCorrect: false },
+    { label: "", isCorrect: false, imageUrl: "" },
   ];
 }
 
 function removeOption(index: number) {
   const remaining = draft.value.options.filter((_, i) => i !== index);
   // 删掉的正好是标着正确的那个时，把正确移到第一个 —— 让草稿始终停在一个上游会
-  // 接受的状态上，比让人保存一次撞一次 400 好。
+  // 接受的状态上，比让人保存一次撞一次 400 好。多选题只在**一个正确的都不剩**
+  // 时才补，因为多选本来就可以有好几个。
   if (!remaining.some((option) => option.isCorrect) && remaining.length) {
     remaining[0] = { ...remaining[0], isCorrect: true };
   }
@@ -284,14 +345,19 @@ function removeOption(index: number) {
 const previewSeed = ref(0);
 const previewOptions = computed(() => {
   void previewSeed.value; // 重洗按钮的依赖
-  const labels = draft.value.options
-    .map((option) => option.label.trim())
-    .filter(Boolean);
-  for (let i = labels.length - 1; i > 0; i--) {
+  // 洗的是**去掉 isCorrect 之后**的那一份，和考生真正拿到的一样。留着那个字段
+  // 再在模板里不去读它，就等着某天有人读了。
+  const shown = draft.value.options
+    .filter((option) => option.label.trim())
+    .map((option) => ({
+      label: option.label.trim(),
+      imageUrl: option.imageUrl,
+    }));
+  for (let i = shown.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [labels[i], labels[j]] = [labels[j], labels[i]];
+    [shown[i], shown[j]] = [shown[j], shown[i]];
   }
-  return labels;
+  return shown;
 });
 
 const draftIssue = computed(() => {
@@ -302,6 +368,8 @@ const draftIssue = computed(() => {
       prompt: "admin.questions.needPrompt",
       options: "admin.questions.needOptions",
       markOne: "admin.questions.markOne",
+      markSome: "admin.questions.markSome",
+      markNotAll: "admin.questions.markNotAll",
     }[problem] ?? "frame.error",
   );
 });
@@ -320,12 +388,16 @@ async function save() {
     category: draft.value.category.trim(),
     explanation: draft.value.explanation,
     enabled: draft.value.enabled,
-    // 空白的选项行是编辑时留下的痕迹，不是选项。
+    multiple: draft.value.multiple,
+    imageUrl: draft.value.imageUrl,
+    // 空白的选项行是编辑时留下的痕迹，不是选项。按**文字**过滤而不是按有没有
+    // 图：上游要求有图的选项也必须有文字，一个只传了图的行在这里就该当成没填完。
     options: draft.value.options
       .filter((option) => option.label.trim())
       .map((option) => ({
         label: option.label.trim(),
         isCorrect: option.isCorrect,
+        imageUrl: option.imageUrl,
       })),
   };
 
@@ -389,12 +461,18 @@ async function duplicate(question: AdminQuestion) {
         prompt: t("admin.questions.copyOf", { prompt: question.prompt }),
         category: question.category,
         explanation: question.explanation,
+        multiple: question.multiple,
+        // 副本和原题指向**同一张图**。复制一份对象出来也可以，但那要么在上游加
+        // 一条复制路由、要么把图拉下来再传一遍，换来的只是「删掉原题的图不影响
+        // 副本」—— 而上游从不删除任何对象，那件事本来就不会发生。
+        imageUrl: question.imageUrl,
         // 副本默认**停用**：它标题里带着「副本」，直接进抽题池等于把一道半成品
         // 发给考生。
         enabled: false,
         options: question.options.map((option) => ({
           label: option.label,
           isCorrect: option.isCorrect,
+          imageUrl: option.imageUrl,
         })),
       },
     });
@@ -623,6 +701,9 @@ watch(editorOpen, (open) => {
                 <BaseBadge v-if="question.category" variant="info" size="sm">
                   {{ question.category }}
                 </BaseBadge>
+                <BaseBadge v-if="question.multiple" variant="warning" size="sm">
+                  {{ t("admin.questions.multiple") }}
+                </BaseBadge>
                 <BaseBadge
                   v-if="question.status !== 1"
                   variant="neutral"
@@ -635,6 +716,16 @@ watch(editorOpen, (open) => {
               <p class="whitespace-pre-wrap text-sm font-medium text-ink">
                 {{ question.prompt }}
               </p>
+
+              <!-- 缩略图而不是原图：这一页是一份五十题的清单，二十张全尺寸的
+                   航图会把它变成一条滚不到底的带子。 -->
+              <img
+                v-if="question.imageUrl"
+                :src="question.imageUrl"
+                :alt="t('admin.questions.figureAlt')"
+                loading="lazy"
+                class="mt-2 max-h-24 w-auto rounded-control border border-subtle"
+              />
 
               <ul class="mt-2 space-y-1">
                 <li
@@ -653,7 +744,16 @@ watch(editorOpen, (open) => {
                     class="mt-0.5 size-3.5 shrink-0"
                   />
                   <span v-else class="mt-0.5 size-3.5 shrink-0"></span>
-                  <span class="whitespace-pre-wrap">{{ option.label }}</span>
+                  <span class="min-w-0">
+                    <span class="whitespace-pre-wrap">{{ option.label }}</span>
+                    <img
+                      v-if="option.imageUrl"
+                      :src="option.imageUrl"
+                      :alt="option.label"
+                      loading="lazy"
+                      class="mt-1 max-h-16 w-auto rounded-control border border-subtle"
+                    />
+                  </span>
                 </li>
               </ul>
 
@@ -754,6 +854,25 @@ watch(editorOpen, (open) => {
         />
 
         <div>
+          <span class="mb-1.5 block text-sm font-medium text-ink">
+            {{ t("admin.questions.image") }}
+          </span>
+          <ImageUpload
+            :model-value="draft.imageUrl"
+            :label="t('admin.questions.imageAdd')"
+            :remove-label="t('admin.questions.imageRemove')"
+            :uploading-label="t('admin.questions.imageUploading')"
+            :alt="t('admin.questions.figureAlt')"
+            :fallback-error="t('admin.questions.imageFailed')"
+            @update:model-value="(value: string) => (draft.imageUrl = value)"
+            @error="(message: string) => (error = message)"
+          />
+          <p class="mt-1 text-xs text-muted">
+            {{ t("admin.questions.imageHelp") }}
+          </p>
+        </div>
+
+        <div>
           <label
             for="question-category"
             class="mb-1.5 block text-sm font-medium text-ink"
@@ -785,15 +904,26 @@ watch(editorOpen, (open) => {
           </p>
         </div>
 
+        <BaseToggle
+          :model-value="draft.multiple"
+          :label="t('admin.questions.multiple')"
+          :description="t('admin.questions.multipleHelp')"
+          @update:model-value="setMultiple"
+        />
+
         <fieldset>
           <legend class="text-sm font-medium text-ink">
             {{ t("admin.questions.options") }}
           </legend>
           <p class="mt-0.5 text-xs text-muted">
-            {{ t("admin.questions.markOne") }}
+            {{
+              draft.multiple
+                ? t("admin.questions.markSome")
+                : t("admin.questions.markOne")
+            }}
           </p>
 
-          <div class="mt-2 space-y-2">
+          <div class="mt-2 space-y-3">
             <div
               v-for="(option, index) in draft.options"
               :key="index"
@@ -802,32 +932,56 @@ watch(editorOpen, (open) => {
               <label
                 class="mt-2 flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-muted"
               >
+                <!-- 单选是 radio，多选是 checkbox。`name` 只在单选时给：一组同名
+                     的 radio 才会互斥，而多选恰恰不该互斥。 -->
                 <input
-                  type="radio"
-                  name="correct-option"
+                  :type="draft.multiple ? 'checkbox' : 'radio'"
+                  :name="draft.multiple ? undefined : 'correct-option'"
                   :checked="option.isCorrect"
-                  class="size-4 accent-[var(--color-airwaysn)]"
-                  @change="markCorrect(index)"
+                  :class="[
+                    'size-4 accent-[var(--color-airwaysn)]',
+                    draft.multiple ? 'rounded-sm' : '',
+                  ]"
+                  @change="
+                    draft.multiple ? toggleCorrect(index) : markCorrect(index)
+                  "
                 />
                 {{ t("admin.questions.correct") }}
               </label>
-              <!-- textarea 而不是 input：选项也会长（「以上所有」很短，但整句的
-                   程序名和高度限制不短），单行框里只看得见结尾。 -->
-              <textarea
-                :value="option.label"
-                class="input w-full flex-1 resize-y"
-                rows="1"
-                :placeholder="
-                  t('admin.questions.optionPlaceholder', { number: index + 1 })
-                "
-                @input="
-                  (event) =>
-                    setOption(
-                      index,
-                      (event.target as HTMLTextAreaElement).value,
-                    )
-                "
-              ></textarea>
+              <div class="min-w-0 flex-1 space-y-1.5">
+                <!-- textarea 而不是 input：选项也会长（「以上所有」很短，但整句的
+                     程序名和高度限制不短），单行框里只看得见结尾。 -->
+                <textarea
+                  :value="option.label"
+                  class="input w-full resize-y"
+                  rows="1"
+                  :placeholder="
+                    t('admin.questions.optionPlaceholder', {
+                      number: index + 1,
+                    })
+                  "
+                  @input="
+                    (event) =>
+                      setOption(
+                        index,
+                        (event.target as HTMLTextAreaElement).value,
+                      )
+                  "
+                ></textarea>
+                <ImageUpload
+                  compact
+                  :model-value="option.imageUrl"
+                  :label="t('admin.questions.imageAdd')"
+                  :remove-label="t('admin.questions.imageRemove')"
+                  :uploading-label="t('admin.questions.imageUploading')"
+                  :alt="option.label"
+                  :fallback-error="t('admin.questions.imageFailed')"
+                  @update:model-value="
+                    (value: string) => setOptionImage(index, value)
+                  "
+                  @error="(message: string) => (error = message)"
+                />
+              </div>
               <button
                 v-if="draft.options.length > 2"
                 type="button"
@@ -894,16 +1048,40 @@ watch(editorOpen, (open) => {
             <p class="whitespace-pre-wrap text-sm font-semibold text-ink">
               {{ draft.prompt || t("admin.questions.promptPlaceholder") }}
             </p>
+            <img
+              v-if="draft.imageUrl"
+              :src="draft.imageUrl"
+              :alt="t('admin.questions.figureAlt')"
+              class="mt-2 max-h-56 w-auto max-w-full rounded-control border border-subtle"
+            />
+            <p v-if="draft.multiple" class="mt-2 text-xs text-muted">
+              {{ t("sit.multipleHint") }}
+            </p>
             <div class="mt-3 space-y-2">
               <div
-                v-for="(label, index) in previewOptions"
+                v-for="(shown, index) in previewOptions"
                 :key="index"
                 class="flex items-start gap-3 rounded-control border border-subtle p-2.5 text-sm"
               >
+                <!-- 方框还是圆框，跟着单选/多选走：作者要看见的正是考生看见的那
+                     一个形状。 -->
                 <span
-                  class="mt-0.5 size-4 shrink-0 rounded-full border border-strong"
+                  :class="[
+                    'mt-0.5 size-4 shrink-0 border border-strong',
+                    draft.multiple ? 'rounded-sm' : 'rounded-full',
+                  ]"
                 ></span>
-                <span class="whitespace-pre-wrap text-ink">{{ label }}</span>
+                <span class="min-w-0">
+                  <span class="block whitespace-pre-wrap text-ink">
+                    {{ shown.label }}
+                  </span>
+                  <img
+                    v-if="shown.imageUrl"
+                    :src="shown.imageUrl"
+                    :alt="shown.label"
+                    class="mt-1.5 max-h-32 w-auto max-w-full rounded-control border border-subtle"
+                  />
+                </span>
               </div>
             </div>
           </div>
