@@ -86,7 +86,10 @@
       "no_questions": "这场考试还没有题目。",
       "rating": "你当前的等级不能参加这场考试。",
       "email_unverified": "请先验证邮箱地址。"
-    }
+    },
+    "multiple": "多选",
+    "multipleHint": "这题可以选多个。少选按比例得分，多选一个错的会扣分。",
+    "figure": "第 {number} 题的配图"
   },
   "admin": {
     "title": "题库管理",
@@ -213,7 +216,18 @@
       "saved": "已保存",
       "duplicated": "已复制，副本默认停用",
       "deleted": "已删除",
-      "deleteTitle": "删除这道题？"
+      "deleteTitle": "删除这道题？",
+      "multiple": "多选题",
+      "multipleHelp": "考生看到复选框。少选按比例得分，选错扣分，全勾得 0 分。",
+      "markSome": "至少标记一个正确答案，且至少留一个错的。",
+      "markNotAll": "不能把所有选项都标成正确 —— 那样全勾就能拿满分。",
+      "image": "配图",
+      "imageHelp": "选填。上传后立刻存进图床，保存这道题才会真正用上。",
+      "imageAdd": "上传图片",
+      "imageRemove": "移除图片",
+      "imageUploading": "上传中…",
+      "imageFailed": "图片上传失败。",
+      "figureAlt": "题目配图"
     },
     "errors": {
       "wrong_region": "你只能把卷子放在自己管理的分部下。",

@@ -68,7 +68,16 @@ export interface AdminQuestion {
   position: number;
   /** 0 停用, 1 启用。停用的题不会被抽中。 */
   status: number;
-  options: { id: number; label: string; isCorrect: boolean }[];
+  /** 多选题。上游存的是显式的一列，不是从「有几个 isCorrect」推的。 */
+  multiple: boolean;
+  /** 题干配图，空表示没有。 */
+  imageUrl: string;
+  options: {
+    id: number;
+    label: string;
+    isCorrect: boolean;
+    imageUrl: string;
+  }[];
 }
 
 /** 写一道题时发上去的形状。选项整组重写，没有「改第三个选项」这种操作。 */
@@ -77,7 +86,9 @@ export interface QuestionDraft {
   category: string;
   explanation: string;
   enabled: boolean;
-  options: { label: string; isCorrect: boolean }[];
+  multiple: boolean;
+  imageUrl: string;
+  options: { label: string; isCorrect: boolean; imageUrl: string }[];
 }
 
 /** 卷子草稿是空的样子。 */
@@ -110,11 +121,13 @@ export function emptyQuestion(): QuestionDraft {
     category: "",
     explanation: "",
     enabled: true,
+    multiple: false,
+    imageUrl: "",
     options: [
-      { label: "", isCorrect: true },
-      { label: "", isCorrect: false },
-      { label: "", isCorrect: false },
-      { label: "", isCorrect: false },
+      { label: "", isCorrect: true, imageUrl: "" },
+      { label: "", isCorrect: false, imageUrl: "" },
+      { label: "", isCorrect: false, imageUrl: "" },
+      { label: "", isCorrect: false, imageUrl: "" },
     ],
   };
 }
@@ -126,9 +139,12 @@ export function toDraft(question: AdminQuestion): QuestionDraft {
     category: question.category,
     explanation: question.explanation,
     enabled: question.status === 1,
+    multiple: question.multiple,
+    imageUrl: question.imageUrl,
     options: question.options.map((option) => ({
       label: option.label,
       isCorrect: option.isCorrect,
+      imageUrl: option.imageUrl,
     })),
   };
 }
@@ -142,9 +158,20 @@ export function toDraft(question: AdminQuestion): QuestionDraft {
  */
 export function draftProblem(draft: QuestionDraft): string | null {
   if (!draft.prompt.trim()) return "prompt";
+  // 只有图没有文字的选项**不算填了**：读屏软件念的是 label，图挂掉的时候看到的
+  // 也是 label，判分之后写进记录的还是 label。所以这里按文字判，和上游一致。
   const filled = draft.options.filter((option) => option.label.trim());
   if (filled.length < 2) return "options";
-  if (filled.filter((option) => option.isCorrect).length !== 1)
-    return "markOne";
+
+  const correct = filled.filter((option) => option.isCorrect).length;
+  if (!draft.multiple) {
+    if (correct !== 1) return "markOne";
+    return null;
+  }
+  // 多选：至少一个对，且至少一个错。允许「只有一个正确答案的多选题」是有意
+  // 的 —— 那正是不让考生从复选框推出答案个数的手段。全对则不行：上游的扣分项
+  // 会消失，于是全勾就能拿满分。
+  if (correct < 1) return "markSome";
+  if (correct === filled.length) return "markNotAll";
   return null;
 }

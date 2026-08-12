@@ -17,6 +17,15 @@
  * 影响对错。老实现比的是文字，于是一个错字（「近进」对「进近」）让一道题谁都
  * 答不对，而 15 题错 1 题仍然过线，所以没人发现。
  *
+ * **每一题的答案都是一组 id，哪怕是单选题。** 单选存成 `[id]` 而不是 `id`，是
+ * 为了让这一页只有一条选答案的路：两种形状并存的话，「已答几题」「能不能交卷」
+ * 「存进 sessionStorage 的是什么」每一处都要分两种情况写，而分叉的那两支迟早
+ * 会走散。上游两种都收（部署有先后，交卷又不能重来），但这边只发新的那一种。
+ *
+ * **多选题按题目说了算，不按选了几个。** `question.multiple` 是上游发下来的，
+ * 单选题上多勾一个不是「对的加噪音」，上游直接判 0 分 —— 所以这一页在单选题上
+ * 严格只留一个，不给人制造一个自己都不知道踩了的坑。
+ *
  * **刷新是安全的。** 卷子按 token 从上游重新取，题目和选项顺序都是记下来的那
  * 一份。但**已选的答案不在上游** —— 那只在这一页的内存里，刷新会丢。所以下面
  * 把它存进 sessionStorage：一次误触 F5 不该让人重答二十道题。
@@ -55,7 +64,8 @@ const progressLabelId = useId();
 const questionPrefix = useId();
 
 const sitting = ref<Sitting | null>(props.sitting);
-const answers = ref<Record<number, number>>({});
+/** 题号 -> 选中的选项 id。单选题也是一组，只是长度恒为 1。 */
+const answers = ref<Record<number, number[]>>({});
 const error = ref<string | null>(
   props.loadError ? errorText(props.loadError) : null,
 );
@@ -69,13 +79,26 @@ const now = ref(Date.now());
 let ticker: ReturnType<typeof setInterval> | undefined;
 
 const total = computed(() => sitting.value?.total ?? 0);
-const answeredCount = computed(() => Object.keys(answers.value).length);
+/** 「已答」= 至少勾了一个。空数组是取消了最后一个勾，那和没答一样。 */
+const answeredCount = computed(
+  () =>
+    Object.values(answers.value).filter((chosen) => chosen.length > 0).length,
+);
 const allAnswered = computed(
   () =>
     !!sitting.value &&
     sitting.value.questions.length > 0 &&
     answeredCount.value >= sitting.value.questions.length,
 );
+
+/** 这道题勾了没有 —— 模板里问了好几处，写成函数免得每处都重复一次长度判断。 */
+function answered(questionId: number): boolean {
+  return (answers.value[questionId]?.length ?? 0) > 0;
+}
+
+function chosen(questionId: number, optionId: number): boolean {
+  return answers.value[questionId]?.includes(optionId) ?? false;
+}
 const progress = computed(() =>
   total.value ? Math.round((answeredCount.value / total.value) * 100) : 0,
 );
@@ -100,9 +123,27 @@ function errorText(code: string): string {
   return message.startsWith("sit.error.") ? t("frame.error") : message;
 }
 
+/** 单选：换成这一个。 */
 function choose(questionId: number, optionId: number) {
   if (submitted.value || expired.value) return;
-  answers.value = { ...answers.value, [questionId]: optionId };
+  answers.value = { ...answers.value, [questionId]: [optionId] };
+  persist();
+}
+
+/**
+ * 多选：勾上或取消。
+ *
+ * 取消最后一个之后留下的是空数组而不是删掉这个键 —— 两者在「已答几题」上等价
+ * （上面按长度算），但留着空数组让 `restore()` 之后的形状和这里写出来的形状始
+ * 终一致，少一种要照顾的状态。
+ */
+function toggleChoice(questionId: number, optionId: number) {
+  if (submitted.value || expired.value) return;
+  const current = answers.value[questionId] ?? [];
+  const next = current.includes(optionId)
+    ? current.filter((id) => id !== optionId)
+    : [...current, optionId];
+  answers.value = { ...answers.value, [questionId]: next };
   persist();
 }
 
@@ -120,14 +161,28 @@ function restore() {
   try {
     const saved = sessionStorage.getItem(storageKey.value);
     if (!saved) return;
-    const parsed = JSON.parse(saved) as Record<string, number>;
-    // 只认这张卷子上真的有的题，免得旧数据把一个不存在的题号带进提交里。
-    const valid = new Set(sitting.value?.questions.map((q) => q.id) ?? []);
-    answers.value = Object.fromEntries(
-      Object.entries(parsed)
-        .map(([key, value]) => [Number(key), value] as const)
-        .filter(([id]) => valid.has(id)),
-    );
+    const parsed = JSON.parse(saved) as Record<string, number | number[]>;
+
+    // 只认这张卷子上真的有的题和真的有的选项。旧数据、或者一个手改过
+    // sessionStorage 的人，都不该能把一个不存在的 id 带进提交里 —— 上游也会
+    // 再挡一次（不是这张卷子发出去的选项一律不计分），这里挡是为了让屏幕上显示
+    // 的和将要提交的是同一回事。
+    const options = new Map<number, Set<number>>();
+    for (const question of sitting.value?.questions ?? []) {
+      options.set(question.id, new Set(question.options.map((o) => o.id)));
+    }
+
+    const restored: Record<number, number[]> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      const questionId = Number(key);
+      const valid = options.get(questionId);
+      if (!valid) continue;
+      // 上一版存的是单个数字。刷新之后不该因为换了个版本就丢掉已经答好的题。
+      const ids = Array.isArray(value) ? value : [value];
+      const kept = [...new Set(ids)].filter((id) => valid.has(id));
+      if (kept.length) restored[questionId] = kept;
+    }
+    answers.value = restored;
   } catch {
     // 存坏了就当没存过。
   }
@@ -338,7 +393,17 @@ onBeforeUnmount(() => clearInterval(ticker));
                   {{ question.category }}
                 </span>
               </p>
-              <span v-if="!answers[question.id]" class="badge badge-warning">
+              <span
+                v-if="question.multiple"
+                class="badge badge-info shrink-0"
+                :title="t('sit.multipleHint')"
+              >
+                {{ t("sit.multiple") }}
+              </span>
+              <span
+                v-if="!answered(question.id)"
+                class="badge badge-warning shrink-0"
+              >
                 {{ t("sit.unanswered") }}
               </span>
             </div>
@@ -350,11 +415,27 @@ onBeforeUnmount(() => clearInterval(ticker));
               {{ question.prompt }}
             </h2>
 
-            <!-- role=radiogroup + aria-labelledby，否则读屏软件在表单模式下念出
-                 的是四个光秃秃的选项，不知道题目问的是什么。 -->
+            <!-- 题干配图。alt 指回题号而不是描述图的内容 —— 内容是题目问的东西，
+                 替读屏软件把它说出来等于把题做了。loading=lazy 因为一张二十题的
+                 卷子可能带二十张图，而屏幕上一次只看得见一题。 -->
+            <img
+              v-if="question.imageUrl"
+              :src="question.imageUrl"
+              :alt="t('sit.figure', { number: index + 1 })"
+              loading="lazy"
+              class="mt-3 max-h-96 w-auto max-w-full rounded-control border border-subtle"
+            />
+
+            <p v-if="question.multiple" class="mt-2 text-xs text-muted">
+              {{ t("sit.multipleHint") }}
+            </p>
+
+            <!-- 单选是 radiogroup，多选是 group，两边都要 aria-labelledby，否则
+                 读屏软件在表单模式下念出的是四个光秃秃的选项，不知道题目问的是
+                 什么。多选不能用 radiogroup：那个角色本身就在说「只能选一个」。 -->
             <div
               class="mt-4 space-y-2"
-              role="radiogroup"
+              :role="question.multiple ? 'group' : 'radiogroup'"
               :aria-labelledby="`${questionPrefix}-${question.id}`"
             >
               <label
@@ -363,21 +444,39 @@ onBeforeUnmount(() => clearInterval(ticker));
                 :class="[
                   'flex items-start gap-3 rounded-control border p-3 text-sm transition-colors',
                   expired ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-                  answers[question.id] === option.id
+                  chosen(question.id, option.id)
                     ? 'border-airwaysn bg-info-bg text-ink'
                     : 'border-subtle hover:border-strong hover:bg-surface-sunken',
                 ]"
               >
                 <input
-                  type="radio"
+                  :type="question.multiple ? 'checkbox' : 'radio'"
                   :name="`question-${question.id}`"
                   :value="option.id"
-                  :checked="answers[question.id] === option.id"
+                  :checked="chosen(question.id, option.id)"
                   :disabled="expired"
-                  class="mt-0.5 size-4 shrink-0 accent-[var(--color-airwaysn)]"
-                  @change="choose(question.id, option.id)"
+                  :class="[
+                    'mt-0.5 size-4 shrink-0 accent-[var(--color-airwaysn)]',
+                    question.multiple ? 'rounded-sm' : '',
+                  ]"
+                  @change="
+                    question.multiple
+                      ? toggleChoice(question.id, option.id)
+                      : choose(question.id, option.id)
+                  "
                 />
-                <span class="text-ink">{{ option.label }}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-ink">{{ option.label }}</span>
+                  <!-- 选项配图的 alt 就是选项文字：图是那句话的图示，不是另一条
+                       信息。上游也要求有图的选项必须有文字，正是为了这里有话可说。 -->
+                  <img
+                    v-if="option.imageUrl"
+                    :src="option.imageUrl"
+                    :alt="option.label"
+                    loading="lazy"
+                    class="mt-2 max-h-48 w-auto max-w-full rounded-control border border-subtle"
+                  />
+                </span>
               </label>
             </div>
           </BaseCard>

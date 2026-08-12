@@ -86,7 +86,10 @@
       "no_questions": "This exam has no questions yet.",
       "rating": "Your rating may not sit this exam.",
       "email_unverified": "Verify your email address first."
-    }
+    },
+    "multiple": "Multiple",
+    "multipleHint": "More than one answer. Partial credit for a partial answer; a wrong tick costs marks.",
+    "figure": "Figure for question {number}"
   },
   "admin": {
     "title": "Question bank",
@@ -213,7 +216,18 @@
       "saved": "Saved",
       "duplicated": "Duplicated — the copy starts disabled",
       "deleted": "Deleted",
-      "deleteTitle": "Delete this question?"
+      "deleteTitle": "Delete this question?",
+      "multiple": "Multiple answers",
+      "multipleHelp": "Candidates see checkboxes. Partial credit for a partial answer, wrong ticks subtract, ticking everything scores nothing.",
+      "markSome": "Mark at least one option correct, and leave at least one wrong.",
+      "markNotAll": "Not every option may be correct — ticking them all would score full marks.",
+      "image": "Image",
+      "imageHelp": "Optional. Uploaded straight away; saving the question is what puts it to use.",
+      "imageAdd": "Upload an image",
+      "imageRemove": "Remove the image",
+      "imageUploading": "Uploading…",
+      "imageFailed": "The image could not be uploaded.",
+      "figureAlt": "Question figure"
     },
     "errors": {
       "wrong_region": "You may only file papers under a division you instruct in.",
