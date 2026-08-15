@@ -86,12 +86,15 @@
       "no_questions": "這場考試還沒有題目。",
       "rating": "你目前的等級不能參加這場考試。",
       "email_unverified": "請先驗證電子郵件地址。"
-    }
+    },
+    "multiple": "多選",
+    "multipleHint": "這題可以選多個。少選按比例得分，多選一個錯的會扣分。",
+    "figure": "第 {number} 題的配圖"
   },
   "admin": {
     "title": "題庫管理",
-    "description": "卷子決定誰能拿到什麼等級，所以這裡只有 SUP / ADM 能進。",
-    "forbidden": "你沒有管理題庫的權限。",
+    "description": "卷子決定誰能拿到什麼等級，所以只有教員及以上能進，而且各自只管得到自己分部的題庫。",
+    "forbidden": "你沒有管理題庫的權限。需要是教員及以上。",
     "noDivision": "你目前不管理任何分部，所以沒有可以編輯的題庫。",
     "scopedTo": "你能編輯的是：{regions}",
     "globalScope": "你能編輯全部分部的題庫。",
@@ -116,7 +119,9 @@
       "manage": "管理題目",
       "delete": "刪除",
       "deleteConfirm": "刪除「{title}」及其全部題目？成員已有的成績會保留。",
-      "shortBank": "題庫只有 {count} 題，少於抽題數"
+      "shortBank": "題庫只有 {count} 題，少於抽題數",
+      "deleteTitle": "刪除這份卷子？",
+      "deleteQuestions": "它下面的 {count} 道題目也會一起刪掉。成員已有的成績會保留。"
     },
     "paper": {
       "titleNew": "新增卷子",
@@ -211,7 +216,18 @@
       "saved": "已儲存",
       "duplicated": "已複製，副本預設停用",
       "deleted": "已刪除",
-      "deleteTitle": "刪除這道題？"
+      "deleteTitle": "刪除這道題？",
+      "multiple": "多選題",
+      "multipleHelp": "考生看到核取方塊。少選按比例得分，選錯扣分，全勾得 0 分。",
+      "markSome": "至少標記一個正確答案，且至少留一個錯的。",
+      "markNotAll": "不能把所有選項都標成正確 —— 那樣全勾就能拿滿分。",
+      "image": "配圖",
+      "imageHelp": "選填。上傳後立刻存進圖床，儲存這道題才會真正用上。",
+      "imageAdd": "上傳圖片",
+      "imageRemove": "移除圖片",
+      "imageUploading": "上傳中…",
+      "imageFailed": "圖片上傳失敗。",
+      "figureAlt": "題目配圖"
     },
     "errors": {
       "wrong_region": "你只能把卷子放在自己管理的分部下。",

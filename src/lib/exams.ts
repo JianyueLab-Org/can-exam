@@ -40,7 +40,17 @@ export interface SittingQuestion {
   id: number;
   prompt: string;
   category: string;
-  options: { id: number; label: string }[];
+  /** 题干配图的地址，空字符串表示没有图。 */
+  imageUrl: string;
+  /**
+   * 多选题：画复选框而不是单选框。
+   *
+   * 它只说「这题要选一组」，**不说要选几个** —— 上游允许一道多选题只有一个正确
+   * 答案，那正是防止考生数复选框个数的手段。所以这里也没有「还差几个」这种提
+   * 示可写，别去找。
+   */
+  multiple: boolean;
+  options: { id: number; label: string; imageUrl: string }[];
 }
 
 /** 一张抽好的卷子。 */
@@ -69,6 +79,13 @@ export interface Sitting {
 
 /** 交卷之后拿到的东西。注意这里没有一道题的对错明细。 */
 export interface SittingResult {
+  /**
+   * 答对的题数，**可能带小数**（11.5）。
+   *
+   * 多选题按 `右/对 − 错/错` 部分给分，所以一道题可以只得半分。写成「答对几
+   * 题」的整数就会出现 10 题对上 77% 这种自相矛盾的一对数字；带小数的那个和
+   * 百分比互相解释得通。
+   */
   score: number;
   totalQuestions: number;
   percent: number;

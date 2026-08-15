@@ -56,6 +56,16 @@ bun run build && bun run start
 一侧只要别绕过去：如果重开一次就换一套题，抽题就变成了重摇 —— 关掉标签页再来一
 次，直到题目顺眼为止，而每一张丢掉的卷子都多泄露一片题库。
 
+**3.5 答案永远是一组 id，哪怕是单选题。**
+
+`SitPaper.vue` 里 `answers` 是 `Record<number, number[]>`，单选题存成 `[id]`。两
+种形状并存的话，「已答几题」「能不能交卷」「存进 sessionStorage 的是什么」每一处
+都要分两种情况写，而分叉的那两支迟早会走散。
+
+上游两种都收（`parseAnswer` 同时认数字和数组），那不是为了照顾老客户端 —— 是因
+为 can-api 和这个站点各自部署，滚动更新的那几分钟里必有一侧是旧的，而**交卷是这
+个站点上唯一不能重试的动作**。
+
 **4. 刷新安全，但答案存在 sessionStorage 里。**
 
 卷子按 token 从上游重新取，题目和选项顺序都是发卷时记下来的那一份。但**已选的
@@ -79,6 +89,47 @@ Astro 在 SSR 下默认从 `Host` 头推出本站 origin 再和浏览器的 `Ori
 这里是 exam.airwaysn.org，写 `href="/roster"` 会打在考试中心自己的域名上然后
 404。开发机上不会暴露（那边主站和这个站都在 localhost），线上才炸。
 
+## 多选题：判分规则在上游，这一侧只画界面
+
+`SittingQuestion.multiple` 是 can-api 发下来的，**不是这边从「有几个正确答案」推
+的** —— 推不出来，考生那份卷子上根本没有 `isCorrect`。它只说「这题要选一组」，
+不说要选几个：上游允许一道多选题只有一个正确答案，那正是防止考生数复选框个数的
+手段。
+
+判分公式在 `can-api/internal/exam` 的 `award()`：
+
+```
+右/正确总数 − 错/错误总数，最低 0
+```
+
+这一侧要配合的只有两件事。**单选题严格只留一个勾** —— 上游对单选题多选是直接判
+0 分（给部分分的话，四选一里蒙两个比蒙一个期望更高），所以界面不该让人踩一个自
+己都不知道踩了的坑。**成绩里的 `score` 可能带小数**（11.5），因为一道题可以只得
+半分；写成整数的「答对几题」就会出现 10 题对上 77% 这种自相矛盾的一对数字。
+
+## 图片：字节走转发，密钥在上游
+
+题目和选项都能挂图，存的是 `cdn.airwaysn.org` 上的**公开 URL**，字节在 Cloudflare
+R2 里。三件事值得先知道：
+
+**这个站点没有 R2 凭据。** `/api/v1/admin/images` 只是把 body 原样转给
+can-api 的 `/api/v1/super/exam/images`，谁能传、什么算图片、多大算太大全在那边
+判。这边先挡一次 4MB 只是为了不让一个 200MB 的请求完整流进这个进程的内存 ——
+**不是**校验，上游那一次才算数。
+
+**上传和保存是两步。** 选完文件当场就传，拿回地址填进草稿；点保存才写进题里。于
+是传了不保存、或者传了又换掉，桶里会留一个没人引的对象。这是有意选的一头：另一
+头要把 File 攥到保存时再传，而那意味着保存变成两段式，中间失败就是一个存了一半
+的表单。
+
+**上游从不删除任何对象。** 换图写新键，旧的留着 —— 一张正在被人作答的卷子，
+layout 里记着题号，题上的图删掉了那张卷子就成了半张。孤儿对象花的是几 KB。
+
+配图的 `alt` 有一条规矩：**题干的图 alt 写「第 N 题的配图」，不写图里有什么** ——
+图里有什么正是题目在问的东西，替读屏软件说出来等于把题做了。选项的图 alt 就是选
+项文字，因为图是那句话的图示；上游要求有图的选项必须有文字，正是为了这里有话可
+写。
+
 ## 和上游的接口
 
 浏览器**从不**直接和 api.airwaysn.org 说话。所有调用走本站 `/api/v1/*` 下的转
@@ -92,6 +143,7 @@ Astro 在 SSR 下默认从 `Host` 头推出本站 origin 再和浏览器的 `Ori
 | `POST /api/v1/sit/{slug}`                     | `POST /api/v1/pilot/exam/papers/{slug}/sit` |
 | `GET·POST /api/v1/sittings/{token}`           | `…/pilot/exam/sittings/{token}`             |
 | `/api/v1/admin/**`                            | `/api/v1/super/exam/**`（WithSuper）        |
+| `POST /api/v1/admin/images`                   | `POST /api/v1/super/exam/images`            |
 | `GET /api/v1/session`、`POST /api/v1/signout` | `…/auth/session`、`…/auth/signout`          |
 
 **这一侧一次授权判断都不做。** 不看 rating、不看会话内容，只把 cookie 转过去、
@@ -138,10 +190,14 @@ rating 够但在任何 division 都没有 instructor 行的人，上游答 403�
 
 题库在 can-api 那边，所以第一次部署有两步在这个仓库之外：
 
-1. can-api：`prisma db push`（四张新表）
+1. can-api：`prisma db push`（四张新表；后来又加了 `examQuestion.multiple`、
+   `examQuestion.imageUrl`、`examOption.imageUrl` 三列 —— **必须先于 can-api 部
+   署**，否则它读题的 SELECT 会撞上不存在的列）
 2. can-api：`go run ./cmd/seed-exam`（把硬编码那份入网测试灌进题库，落在
    `examPaper` id = 1 —— `exam.examId` 里已有的历史记录全都写着 1）
-3. 才轮到这个仓库的 `deploy/k8s.yaml`
+3. can-api：建 R2 桶、挂 `cdn.airwaysn.org`、配那五项 `R2_*`。**可以跳过** ——
+   跳过就是「这个部署不支持上传图片」，上传按钮会这么说，其余一切照常
+4. 才轮到这个仓库的 `deploy/k8s.yaml`
 
 跳过第 2 步站点起得来，但一场考试都列不出来。那不是故障，是题库真的空着。
 

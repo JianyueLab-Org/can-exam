@@ -86,12 +86,15 @@
       "no_questions": "This exam has no questions yet.",
       "rating": "Your rating may not sit this exam.",
       "email_unverified": "Verify your email address first."
-    }
+    },
+    "multiple": "Multiple",
+    "multipleHint": "More than one answer. Partial credit for a partial answer; a wrong tick costs marks.",
+    "figure": "Figure for question {number}"
   },
   "admin": {
     "title": "Question bank",
-    "description": "Papers decide who gets which rating, so this is SUP/ADM only.",
-    "forbidden": "You may not manage the question bank.",
+    "description": "Papers decide who gets which rating, so this is instructors and above — each scoped to the divisions they instruct in.",
+    "forbidden": "You may not manage the question bank. It is instructors and above.",
     "noDivision": "You do not instruct in any division, so there is no bank for you to edit.",
     "scopedTo": "You may edit: {regions}",
     "globalScope": "You may edit every division's bank.",
@@ -116,7 +119,9 @@
       "manage": "Questions",
       "delete": "Delete",
       "deleteConfirm": "Delete “{title}” and every question on it? Members' recorded results are kept.",
-      "shortBank": "The bank holds only {count} questions — fewer than the draw"
+      "shortBank": "The bank holds only {count} questions — fewer than the draw",
+      "deleteTitle": "Delete this paper?",
+      "deleteQuestions": "Its {count} questions go with it. Members' recorded results are kept."
     },
     "paper": {
       "titleNew": "New paper",
@@ -211,7 +216,18 @@
       "saved": "Saved",
       "duplicated": "Duplicated — the copy starts disabled",
       "deleted": "Deleted",
-      "deleteTitle": "Delete this question?"
+      "deleteTitle": "Delete this question?",
+      "multiple": "Multiple answers",
+      "multipleHelp": "Candidates see checkboxes. Partial credit for a partial answer, wrong ticks subtract, ticking everything scores nothing.",
+      "markSome": "Mark at least one option correct, and leave at least one wrong.",
+      "markNotAll": "Not every option may be correct — ticking them all would score full marks.",
+      "image": "Image",
+      "imageHelp": "Optional. Uploaded straight away; saving the question is what puts it to use.",
+      "imageAdd": "Upload an image",
+      "imageRemove": "Remove the image",
+      "imageUploading": "Uploading…",
+      "imageFailed": "The image could not be uploaded.",
+      "figureAlt": "Question figure"
     },
     "errors": {
       "wrong_region": "You may only file papers under a division you instruct in.",

@@ -86,12 +86,15 @@
       "no_questions": "この試験にはまだ問題がありません。",
       "rating": "現在のレーティングではこの試験を受験できません。",
       "email_unverified": "先にメールアドレスを確認してください。"
-    }
+    },
+    "multiple": "複数選択",
+    "multipleHint": "この問題は複数選べます。一部正解は部分点、誤答を選ぶと減点されます。",
+    "figure": "第 {number} 問の図"
   },
   "admin": {
     "title": "問題バンク",
-    "description": "試験はレーティングの付与を左右するため、ここは SUP / ADM 専用です。",
-    "forbidden": "問題バンクを管理する権限がありません。",
+    "description": "試験はレーティングの付与を左右するため、教員以上のみが入れます。編集できるのは自分が担当するディビジョンの問題バンクだけです。",
+    "forbidden": "問題バンクを管理する権限がありません。教員以上が必要です。",
     "noDivision": "どの division の教員でもないため、編集できる問題バンクがありません。",
     "scopedTo": "編集できる範囲：{regions}",
     "globalScope": "すべての division の問題バンクを編集できます。",
@@ -116,7 +119,9 @@
       "manage": "問題を管理",
       "delete": "削除",
       "deleteConfirm": "「{title}」とその全問題を削除しますか？受験者の成績は保持されます。",
-      "shortBank": "バンクは {count} 問しかなく、出題数を下回っています"
+      "shortBank": "バンクは {count} 問しかなく、出題数を下回っています",
+      "deleteTitle": "この試験を削除しますか？",
+      "deleteQuestions": "配下の {count} 問も一緒に削除されます。受験者の成績は保持されます。"
     },
     "paper": {
       "titleNew": "試験を作成",
@@ -211,7 +216,18 @@
       "saved": "保存しました",
       "duplicated": "複製しました（コピーは無効の状態です）",
       "deleted": "削除しました",
-      "deleteTitle": "この問題を削除しますか？"
+      "deleteTitle": "この問題を削除しますか？",
+      "multiple": "複数選択問題",
+      "multipleHelp": "受験者にはチェックボックスが表示されます。一部正解は部分点、誤答は減点、全選択は 0 点です。",
+      "markSome": "正解を最低 1 つ、誤答も最低 1 つ残してください。",
+      "markNotAll": "すべてを正解にはできません —— 全選択で満点になってしまいます。",
+      "image": "画像",
+      "imageHelp": "任意。選択した時点でアップロードされ、問題を保存すると実際に使われます。",
+      "imageAdd": "画像をアップロード",
+      "imageRemove": "画像を削除",
+      "imageUploading": "アップロード中…",
+      "imageFailed": "画像をアップロードできませんでした。",
+      "figureAlt": "問題の図"
     },
     "errors": {
       "wrong_region": "自分が担当する division にのみ試験を作成できます。",
