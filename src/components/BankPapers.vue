@@ -364,7 +364,7 @@ async function confirmDelete() {
                   class="flex justify-between gap-2"
                 >
                   <dt>{{ t("admin.paper.promoteTo") }}</dt>
-                  <dd class="text-airwaysn">
+                  <dd class="text-can">
                     {{ ratingName(paper.promoteTo) }}
                   </dd>
                 </div>
@@ -538,7 +538,7 @@ async function confirmDelete() {
                 :class="[
                   'flex cursor-pointer items-center gap-1 rounded-control border px-2.5 py-1 text-xs transition-colors',
                   (draft.eligibleRatings ?? []).includes(rating.id)
-                    ? 'border-airwaysn bg-info-bg font-medium text-ink'
+                    ? 'border-can bg-info-bg font-medium text-ink'
                     : 'border-subtle text-muted hover:border-strong hover:bg-surface-sunken hover:text-ink',
                 ]"
               >

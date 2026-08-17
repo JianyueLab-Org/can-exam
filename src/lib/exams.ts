@@ -117,7 +117,7 @@ export interface ApiError {
 /**
  * 调用本站的转发层。
  *
- * 全部是同源的相对路径 —— 浏览器从头到尾没有和 api.airwaysn.org 说过话，所以
+ * 全部是同源的相对路径 —— 浏览器从头到尾没有和 api.ceruleanavi.net 说过话，所以
  * 不需要 CORS，也不需要 `credentials: "include"`（同源请求本来就带 cookie）。
  *
  * 抛出的是 `ApiError`，因为**错误码是要用的**：交卷可能回 409

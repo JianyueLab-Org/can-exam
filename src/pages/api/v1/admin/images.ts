@@ -15,7 +15,7 @@ import { callApi, relay } from "@/server/upstream";
  * 上游会 sniff 字节来决定类型，所以浏览器发来的 Content-Type 只是**转发**，不
  * 是判断依据 —— 这里也就不必检查它。
  *
- * 拿回来的是一个 cdn.airwaysn.org 上的地址，页面把它存进题里；存那一步是另一次
+ * 拿回来的是一个 cdn.ceruleanavi.net 上的地址，页面把它存进题里；存那一步是另一次
  * 请求（PATCH 那道题），也是另一次鉴权。
  */
 const UPSTREAM_PATH = "/api/v1/super/exam/images";

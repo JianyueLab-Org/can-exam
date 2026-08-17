@@ -2,7 +2,7 @@
 #
 # 形状和 can-dev / can-radar / llm-web 一致：一个应用一个 namespace，Deployment
 # 和 Service 都叫 app，Service 暴露 80，Ingress 走默认的 cloudflare-tunnel
-# （控制器会把 exam.airwaysn.org 的 DNS 记录建好，TLS 在 Cloudflare 终止，所以
+# （控制器会把 exam.ceruleanavi.net 的 DNS 记录建好，TLS 在 Cloudflare 终止，所以
 # 这里没有 cert-manager 注解、也没有 tls: 段）。
 #
 # ---------------------------------------------------------------------------
@@ -50,20 +50,20 @@ spec:
             # 它。这个站点自己不验会话签名 —— SESSION_SECRET 不该在这个部署里
             # 多存一份，省下的只是一次内网 HTTP。
             - name: CAN_API_ORIGIN
-              value: https://api.airwaysn.org
+              value: https://api.ceruleanavi.net
             # 主站。页眉那排导航和唯一的登录入口指向它 —— 这里是另一个源，写相
-            # 对路径会打在 exam.airwaysn.org 上然后 404。
+            # 对路径会打在 exam.ceruleanavi.net 上然后 404。
             - name: CAN_WEB_ORIGIN
-              value: https://airwaysn.org
+              value: https://ceruleanavi.net
             # 本站自己的对外地址，用来校验写操作的 Origin。
             #
             # **不能省。** 省掉的话它是开发机的 localhost，而浏览器发来的是
-            # https://exam.airwaysn.org，两者对不上 —— 于是发卷和交卷会稳定地
+            # https://exam.ceruleanavi.net，两者对不上 —— 于是发卷和交卷会稳定地
             # 403，而交卷是这个站点最不能坏的一个动作。它是显式配置而不是从
             # Host 头推的：这个 Pod 前面是 cloudflare-tunnel，请求头里的东西正
             # 是那一层能改的（Astro 自带的 checkOrigin 也是因此关掉的）。
             - name: PUBLIC_ORIGIN
-              value: https://exam.airwaysn.org
+              value: https://exam.ceruleanavi.net
           # 首页在没有会话时不碰 can-api（`readMember` 见到没 cookie 就直接返
           # 回 null），所以探针只证明这个进程活着，**不**证明上游可用。can-api
           # 挂了的时候这一页照样 200，只是登录之后一场考试都列不出来。
@@ -122,7 +122,7 @@ metadata:
 spec:
   ingressClassName: cloudflare-tunnel
   rules:
-    - host: exam.airwaysn.org
+    - host: exam.ceruleanavi.net
       http:
         paths:
           - backend:

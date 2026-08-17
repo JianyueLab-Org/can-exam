@@ -86,7 +86,7 @@ Astro 在 SSR 下默认从 `Host` 头推出本站 origin 再和浏览器的 `Ori
 
 **6. 页眉的跨站链接必须走 `siteOrigin`。**
 
-这里是 exam.airwaysn.org，写 `href="/roster"` 会打在考试中心自己的域名上然后
+这里是 exam.ceruleanavi.net，写 `href="/roster"` 会打在考试中心自己的域名上然后
 404。开发机上不会暴露（那边主站和这个站都在 localhost），线上才炸。
 
 ## 多选题：判分规则在上游，这一侧只画界面
@@ -109,7 +109,7 @@ Astro 在 SSR 下默认从 `Host` 头推出本站 origin 再和浏览器的 `Ori
 
 ## 图片：字节走转发，密钥在上游
 
-题目和选项都能挂图，存的是 `cdn.airwaysn.org` 上的**公开 URL**，字节在 Cloudflare
+题目和选项都能挂图，存的是 `cdn.ceruleanavi.net` 上的**公开 URL**，字节在 Cloudflare
 R2 里。三件事值得先知道：
 
 **这个站点没有 R2 凭据。** `/api/v1/admin/images` 只是把 body 原样转给
@@ -132,9 +132,9 @@ layout 里记着题号，题上的图删掉了那张卷子就成了半张。孤�
 
 ## 和上游的接口
 
-浏览器**从不**直接和 api.airwaysn.org 说话。所有调用走本站 `/api/v1/*` 下的转
+浏览器**从不**直接和 api.ceruleanavi.net 说话。所有调用走本站 `/api/v1/*` 下的转
 发，在服务端带着 cookie 发出（`src/server/upstream.ts` 是唯一一条路）。于是不需
-要 CORS —— exam.airwaysn.org 不在 can-api 的 `ALLOWED_ORIGINS` 里，也不需要在。
+要 CORS —— exam.ceruleanavi.net 不在 can-api 的 `ALLOWED_ORIGINS` 里，也不需要在。
 
 | 本站                                          | can-api                                     |
 | --------------------------------------------- | ------------------------------------------- |
@@ -195,7 +195,7 @@ rating 够但在任何 division 都没有 instructor 行的人，上游答 403�
    署**，否则它读题的 SELECT 会撞上不存在的列）
 2. can-api：`go run ./cmd/seed-exam`（把硬编码那份入网测试灌进题库，落在
    `examPaper` id = 1 —— `exam.examId` 里已有的历史记录全都写着 1）
-3. can-api：建 R2 桶、挂 `cdn.airwaysn.org`、配那五项 `R2_*`。**可以跳过** ——
+3. can-api：建 R2 桶、挂 `cdn.ceruleanavi.net`、配那五项 `R2_*`。**可以跳过** ——
    跳过就是「这个部署不支持上传图片」，上传按钮会这么说，其余一切照常
 4. 才轮到这个仓库的 `deploy/k8s.yaml`
 

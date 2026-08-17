@@ -358,7 +358,7 @@ onBeforeUnmount(() => clearInterval(ticker));
             <p :id="progressLabelId" class="text-sm font-medium text-ink">
               {{ t("sit.progress", { answered: answeredCount, total }) }}
             </p>
-            <span class="tnum text-sm font-semibold text-airwaysn">
+            <span class="tnum text-sm font-semibold text-can">
               {{ progress }}%
             </span>
           </div>
@@ -371,7 +371,7 @@ onBeforeUnmount(() => clearInterval(ticker));
             aria-valuemax="100"
           >
             <div
-              class="h-full rounded-full bg-airwaysn transition-[width] duration-300"
+              class="h-full rounded-full bg-can transition-[width] duration-300"
               :style="{ width: `${progress}%` }"
             ></div>
           </div>
@@ -447,7 +447,7 @@ onBeforeUnmount(() => clearInterval(ticker));
                   'flex items-start gap-3 rounded-control border p-3 text-sm transition-colors',
                   expired ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
                   chosen(question.id, option.id)
-                    ? 'border-airwaysn bg-info-bg text-ink'
+                    ? 'border-can bg-info-bg text-ink'
                     : 'border-subtle hover:border-strong hover:bg-surface-sunken',
                 ]"
               >
@@ -458,7 +458,7 @@ onBeforeUnmount(() => clearInterval(ticker));
                   :checked="chosen(question.id, option.id)"
                   :disabled="expired"
                   :class="[
-                    'mt-0.5 size-4 shrink-0 accent-[var(--color-airwaysn)]',
+                    'mt-0.5 size-4 shrink-0 accent-[var(--color-can)]',
                     question.multiple ? 'rounded-sm' : '',
                   ]"
                   @change="

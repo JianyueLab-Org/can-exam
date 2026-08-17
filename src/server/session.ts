@@ -9,8 +9,8 @@ import { SESSION_COOKIE, apiOrigin } from "./config";
  * 两句话都要成立，缺一句就会有人写错东西。
  *
  * 会话 cookie（`can_session`）是 can-api 签的，Domain 是**父域**
- * `.airwaysn.org`（见 can-api 的 `internal/session/session.go` 和
- * `deploy/k8s.yaml` 里的 `COOKIE_DOMAIN`）。exam.airwaysn.org 是那个域下面的
+ * `.ceruleanavi.net`（见 can-api 的 `internal/session/session.go` 和
+ * `deploy/k8s.yaml` 里的 `COOKIE_DOMAIN`）。exam.ceruleanavi.net 是那个域下面的
  * 一台主机，所以浏览器本来就把这枚 cookie 带到这里来了。这个文件做的全部事情
  * 就是把它读出来，问一次「这是谁」。
  *

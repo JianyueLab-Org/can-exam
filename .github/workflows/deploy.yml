@@ -26,5 +26,5 @@ jobs:
       image: ghcr.io/jianyuelab-org/can-exam
       namespace: can-exam
       manifest: deploy/k8s.yaml
-      environment_url: https://exam.airwaysn.org
+      environment_url: https://exam.ceruleanavi.net
     secrets: inherit

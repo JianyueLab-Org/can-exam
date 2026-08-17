@@ -941,7 +941,7 @@ watch(editorOpen, (open) => {
                   :name="draft.multiple ? undefined : 'correct-option'"
                   :checked="option.isCorrect"
                   :class="[
-                    'size-4 accent-[var(--color-airwaysn)]',
+                    'size-4 accent-[var(--color-can)]',
                     draft.multiple ? 'rounded-sm' : '',
                   ]"
                   @change="
