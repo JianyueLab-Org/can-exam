@@ -1,6 +1,6 @@
 # can-exam
 
-Cerulean Aviation Network 的**考试中心** —— `exam.airwaysn.org`。
+Cerulean Aviation Network 的**考试中心** —— `exam.ceruleanavi.net`。
 
 入网测试和各席位的理论考试在这里进行。题目从题库里**随机抽取**，每道题的选项顺
 序**每次都打乱**，所以两个人同时开考拿到的不是同一张卷子。题目可以带图（航图、
@@ -24,7 +24,7 @@ Astro SSR + Vue 岛屿 + Tailwind v4，和 can-dev、can-radar 同一套。
   来了；这个站点只是认得出来。登录入口只有主站一个。
 - **没有数据库。** 题库、卷子、成绩全在 can-api 的 MySQL 里。
 - **没有答案。** 发下来的卷子是 can-api 去掉答案之后的那一份。判卷也在那边。
-- **没有图床凭据。** 题目配图存在 Cloudflare R2 上，读走 `cdn.airwaysn.org`。上
+- **没有图床凭据。** 题目配图存在 Cloudflare R2 上，读走 `cdn.ceruleanavi.net`。上
   传那一下是转发给 can-api 的，R2 的密钥只在它那边 —— 和这个站点不碰数据库是同
   一条规矩。
 
@@ -104,7 +104,7 @@ kubectl apply -f deploy/k8s.yaml
 1. 再 `prisma db push` 一次 —— `examQuestion` 多了 `multiple` 和 `imageUrl`，
    `examOption` 多了 `imageUrl`。**这一步要先于 can-api 部署**，否则它读题的
    SELECT 会撞上不存在的列。
-2. 建一个 R2 桶、挂上 `cdn.airwaysn.org` 这个自定义域、开一只只对该桶有
+2. 建一个 R2 桶、挂上 `cdn.ceruleanavi.net` 这个自定义域、开一只只对该桶有
    Object Read & Write 的 API 令牌，把那五项配进 can-api。不做这一步的话，站点
    一切正常，只是上传按钮会说图片存储没配。
 

@@ -4,7 +4,7 @@
  *
  * 两件事值得先读：
  *
- * **每个跨站链接都必须带上 `siteOrigin`。** 这里是 exam.airwaysn.org，写
+ * **每个跨站链接都必须带上 `siteOrigin`。** 这里是 exam.ceruleanavi.net，写
  * `href="/roster"` 会打在考试中心自己的域名上然后 404。这条坑 can-radar 的
  * CLAUDE.md 专门列成了一条，因为它在开发机上不会暴露 —— 开发机上主站和这个站
  * 都在 localhost。

@@ -196,7 +196,7 @@ onMounted(async () => {
                   </dd>
                   <dd
                     v-if="paper.promoteTo !== null"
-                    class="flex items-center gap-1 text-airwaysn"
+                    class="flex items-center gap-1 text-can"
                   >
                     <Icon name="sparkles" class="size-3.5" />
                     {{

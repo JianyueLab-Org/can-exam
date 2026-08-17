@@ -8,7 +8,7 @@ import { SESSION_COOKIE, apiOrigin } from "./config";
  * 每一次调用都在服务端发出，带着浏览器本来就有的那枚会话 cookie，浏览器那边
  * 看到的永远是同源的一次 fetch。三个后果，都是有意的：
  *
- * 1. **不用给 can-api 开 CORS。** exam.airwaysn.org 不在它的 ALLOWED_ORIGINS
+ * 1. **不用给 can-api 开 CORS。** exam.ceruleanavi.net 不在它的 ALLOWED_ORIGINS
  *    里，也不需要在 —— 和 can-radar 一样。少一个跨源白名单条目，就少一处「哪
  *    天忘了同步就整站登录失效」的地方。
  *

@@ -23,7 +23,7 @@ const trim = (value: string) => value.replace(/\/+$/, "");
  * 判卷逻辑一样都不在这边。
  */
 export const apiOrigin = () =>
-  trim(process.env.CAN_API_ORIGIN || "https://api.airwaysn.org");
+  trim(process.env.CAN_API_ORIGIN || "https://api.ceruleanavi.net");
 
 /**
  * 主站。页眉导航和**唯一的登录入口**指向它。
@@ -33,7 +33,7 @@ export const apiOrigin = () =>
  * 主站在 :4321，所以这个值必须可配，否则开发机上的「登录」会把人送到线上去。
  */
 export const webOrigin = () =>
-  trim(process.env.CAN_WEB_ORIGIN || "https://airwaysn.org");
+  trim(process.env.CAN_WEB_ORIGIN || "https://ceruleanavi.net");
 
 /**
  * 这个部署自己的对外地址。

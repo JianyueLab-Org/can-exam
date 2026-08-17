@@ -7,7 +7,7 @@
 
 /** can-api 愿意告诉前端的那份成员身份（它的 `memberIdentity`）。 */
 export interface Member {
-  /** ASN ID。 */
+  /** CAN ID。 */
   username: string;
   name: string;
   rating: number;
