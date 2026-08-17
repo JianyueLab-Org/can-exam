@@ -562,19 +562,19 @@ watch(editorOpen, (open) => {
     <template v-else>
       <PageHeader :title="paper.title" icon="documentText">
         <template #actions>
-          <BaseButton as="a" href="/admin" variant="ghost" size="sm">
+          <Button as="a" href="/admin" variant="ghost" size="sm">
             <template #icon><Icon name="arrowLeft" class="size-4" /></template>
             {{ t("admin.back") }}
-          </BaseButton>
-          <BaseButton @click="add">
+          </Button>
+          <Button @click="add">
             <template #icon><Icon name="plus" class="size-4" /></template>
             {{ t("admin.questions.add") }}
-          </BaseButton>
+          </Button>
         </template>
       </PageHeader>
 
       <!-- 概况。抽题数和题库大小放在一起，因为它们只有对照着看才有意义。 -->
-      <BaseCard padding="md" class="-mt-4 mb-4">
+      <Card padding="md" class="-mt-4 mb-4">
         <dl class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <div class="flex items-baseline gap-1.5">
             <dt class="text-muted">{{ t("admin.questions.statBank") }}</dt>
@@ -611,7 +611,7 @@ watch(editorOpen, (open) => {
             {{ warning }}
           </li>
         </ul>
-      </BaseCard>
+      </Card>
 
       <AlertBox v-if="error" variant="danger" class="mb-4">{{
         error
@@ -626,14 +626,14 @@ watch(editorOpen, (open) => {
       >
         <div class="flex flex-wrap items-end gap-3">
           <div class="min-w-[12rem] flex-1">
-            <BaseInput
+            <Input
               :model-value="search"
               :label="t('admin.questions.search')"
               :placeholder="t('admin.questions.searchPlaceholder')"
               @update:model-value="(value: string) => (search = value)"
             />
           </div>
-          <BaseSelect
+          <Select
             :model-value="categoryFilter"
             :label="t('admin.questions.category')"
             :options="categoryOptions"
@@ -641,7 +641,7 @@ watch(editorOpen, (open) => {
               (value: string | number) => (categoryFilter = String(value))
             "
           />
-          <BaseSelect
+          <Select
             :model-value="statusFilter"
             :label="t('admin.questions.status')"
             :options="statusOptions"
@@ -649,7 +649,7 @@ watch(editorOpen, (open) => {
               (value: string | number) => (statusFilter = String(value))
             "
           />
-          <BaseSelect
+          <Select
             :model-value="sortBy"
             :label="t('admin.questions.sort')"
             :options="sortOptions"
@@ -700,19 +700,15 @@ watch(editorOpen, (open) => {
                 v-if="question.category || question.status !== 1"
                 class="mb-1.5 flex flex-wrap items-center gap-1.5"
               >
-                <BaseBadge v-if="question.category" variant="info" size="sm">
+                <Badge v-if="question.category" variant="info" size="sm">
                   {{ question.category }}
-                </BaseBadge>
-                <BaseBadge v-if="question.multiple" variant="warning" size="sm">
+                </Badge>
+                <Badge v-if="question.multiple" variant="warning" size="sm">
                   {{ t("admin.questions.multiple") }}
-                </BaseBadge>
-                <BaseBadge
-                  v-if="question.status !== 1"
-                  variant="neutral"
-                  size="sm"
-                >
+                </Badge>
+                <Badge v-if="question.status !== 1" variant="neutral" size="sm">
                   {{ t("admin.questions.disabled") }}
-                </BaseBadge>
+                </Badge>
               </div>
 
               <p class="whitespace-pre-wrap text-sm font-medium text-ink">
@@ -768,7 +764,7 @@ watch(editorOpen, (open) => {
             </div>
 
             <div class="flex shrink-0 items-center gap-0.5">
-              <BaseButton
+              <Button
                 variant="ghost"
                 size="sm"
                 icon-only
@@ -786,8 +782,8 @@ watch(editorOpen, (open) => {
                     class="size-4"
                   />
                 </template>
-              </BaseButton>
-              <BaseButton
+              </Button>
+              <Button
                 variant="ghost"
                 size="sm"
                 icon-only
@@ -795,8 +791,8 @@ watch(editorOpen, (open) => {
                 @click="duplicate(question)"
               >
                 <template #icon><Icon name="plus" class="size-4" /></template>
-              </BaseButton>
-              <BaseButton
+              </Button>
+              <Button
                 variant="ghost"
                 size="sm"
                 icon-only
@@ -806,8 +802,8 @@ watch(editorOpen, (open) => {
                 <template #icon>
                   <Icon name="pencilSquare" class="size-4" />
                 </template>
-              </BaseButton>
-              <BaseButton
+              </Button>
+              <Button
                 variant="ghost"
                 size="sm"
                 icon-only
@@ -815,7 +811,7 @@ watch(editorOpen, (open) => {
                 @click="deleting = question"
               >
                 <template #icon><Icon name="xMark" class="size-4" /></template>
-              </BaseButton>
+              </Button>
             </div>
           </div>
         </li>
@@ -824,7 +820,7 @@ watch(editorOpen, (open) => {
 
     <!-- 编辑器做成对话框而不是就地展开：一份五十题的卷子里就地展开的表单，人滚
          两下就找不到自己在改哪一道了。 -->
-    <BaseDialog
+    <Dialog
       v-model:open="editorOpen"
       :title="
         editingId
@@ -846,7 +842,7 @@ watch(editorOpen, (open) => {
           {{ t("admin.questions.editWarning") }}
         </AlertBox>
 
-        <BaseTextarea
+        <Textarea
           :model-value="draft.prompt"
           :label="t('admin.questions.prompt')"
           :placeholder="t('admin.questions.promptPlaceholder')"
@@ -906,7 +902,7 @@ watch(editorOpen, (open) => {
           </p>
         </div>
 
-        <BaseToggle
+        <Toggle
           :model-value="draft.multiple"
           :label="t('admin.questions.multiple')"
           :description="t('admin.questions.multipleHelp')"
@@ -996,13 +992,13 @@ watch(editorOpen, (open) => {
             </div>
           </div>
 
-          <BaseButton variant="ghost" size="sm" class="mt-2" @click="addOption">
+          <Button variant="ghost" size="sm" class="mt-2" @click="addOption">
             <template #icon><Icon name="plus" class="size-4" /></template>
             {{ t("admin.questions.addOption") }}
-          </BaseButton>
+          </Button>
         </fieldset>
 
-        <BaseTextarea
+        <Textarea
           :model-value="draft.explanation"
           :label="t('admin.questions.explanation')"
           :hint="t('admin.questions.explanationHelp')"
@@ -1010,7 +1006,7 @@ watch(editorOpen, (open) => {
           @update:model-value="(value: string) => (draft.explanation = value)"
         />
 
-        <BaseToggle
+        <Toggle
           :model-value="draft.enabled"
           :label="t('admin.questions.enabled')"
           :description="t('admin.questions.enabledHelp')"
@@ -1094,18 +1090,18 @@ watch(editorOpen, (open) => {
         <p v-if="draftIssue" class="mr-auto text-xs text-warning-fg">
           {{ draftIssue }}
         </p>
-        <BaseButton variant="ghost" @click="editorOpen = false">
+        <Button variant="ghost" @click="editorOpen = false">
           {{ t("admin.paper.cancel") }}
-        </BaseButton>
-        <BaseButton :loading="saving" :disabled="!!draftIssue" @click="save">
+        </Button>
+        <Button :loading="saving" :disabled="!!draftIssue" @click="save">
           {{ saving ? t("admin.paper.saving") : t("admin.questions.save") }}
-        </BaseButton>
+        </Button>
       </template>
-    </BaseDialog>
+    </Dialog>
 
     <!-- 删除确认。window.confirm 用不上本站的语言和样式，而这是一个不可撤销的
          动作，值得一个能把题面写出来的框 —— 删错一道题的代价是重打一遍。 -->
-    <BaseDialog
+    <Dialog
       :open="!!deleting"
       :title="t('admin.questions.deleteTitle')"
       :close-label="t('admin.paper.cancel')"
@@ -1124,17 +1120,17 @@ watch(editorOpen, (open) => {
         {{ deleting.prompt }}
       </p>
       <template #footer>
-        <BaseButton variant="ghost" @click="deleting = null">
+        <Button variant="ghost" @click="deleting = null">
           {{ t("admin.paper.cancel") }}
-        </BaseButton>
-        <BaseButton
+        </Button>
+        <Button
           variant="danger"
           :loading="busyId === deleting?.id"
           @click="confirmDelete"
         >
           {{ t("admin.questions.delete") }}
-        </BaseButton>
+        </Button>
       </template>
-    </BaseDialog>
+    </Dialog>
   </div>
 </template>
