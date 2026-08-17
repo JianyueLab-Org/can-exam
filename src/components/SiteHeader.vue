@@ -147,9 +147,9 @@ onBeforeUnmount(() =>
             {{ t("signOut") }}
           </button>
         </template>
-        <BaseButton v-else as="a" :href="signInHref" size="sm">
+        <Button v-else as="a" :href="signInHref" size="sm">
           {{ t("signIn") }}
-        </BaseButton>
+        </Button>
       </div>
     </div>
   </header>

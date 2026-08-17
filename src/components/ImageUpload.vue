@@ -136,7 +136,7 @@ async function upload(event: Event) {
       </button>
     </div>
 
-    <BaseButton
+    <Button
       v-else
       variant="ghost"
       :size="compact ? 'sm' : 'sm'"
@@ -145,6 +145,6 @@ async function upload(event: Event) {
     >
       <template #icon><Icon name="photo" class="size-4" /></template>
       {{ uploading ? uploadingLabel : label }}
-    </BaseButton>
+    </Button>
   </div>
 </template>

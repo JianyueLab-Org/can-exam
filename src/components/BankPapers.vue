@@ -265,10 +265,10 @@ async function confirmDelete() {
       icon="adjustments"
     >
       <template #actions>
-        <BaseButton v-if="!forbidden" @click="open()">
+        <Button v-if="!forbidden" @click="open()">
           <template #icon><Icon name="plus" class="size-4" /></template>
           {{ t("admin.papers.new") }}
-        </BaseButton>
+        </Button>
       </template>
     </PageHeader>
 
@@ -306,17 +306,13 @@ async function confirmDelete() {
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          <BaseCard
-            v-for="paper in section.papers"
-            :key="paper.id"
-            padding="md"
-          >
+          <Card v-for="paper in section.papers" :key="paper.id" padding="md">
             <!-- 卡片是一个纵向的三段式：头部标识、中间数据、底部操作。用
                  flex-col + flex-1 让中段撑开，同一行里高矮不齐的卡片底部按钮
                  仍然对齐 —— 网格里这一点比在列表里明显得多。 -->
             <div class="flex h-full flex-col">
               <div class="flex flex-wrap items-center gap-1.5">
-                <BaseBadge
+                <Badge
                   :variant="paper.status === 1 ? 'success' : 'neutral'"
                   size="sm"
                 >
@@ -325,16 +321,16 @@ async function confirmDelete() {
                       ? t("admin.papers.published")
                       : t("admin.papers.draft")
                   }}
-                </BaseBadge>
+                </Badge>
                 <!-- 分部已经是 section 的标题了，卡片上换成分栏（飞行员/管制
                      员）—— 那是这里唯一还看不出来的维度。 -->
-                <BaseBadge variant="info" size="sm">
+                <Badge variant="info" size="sm">
                   {{
                     paper.scope === "controllers"
                       ? t("home.controllers")
                       : t("home.pilots")
                   }}
-                </BaseBadge>
+                </Badge>
               </div>
 
               <h3 class="mt-2 line-clamp-2 text-sm font-semibold text-ink">
@@ -387,7 +383,7 @@ async function confirmDelete() {
               <div
                 class="mt-auto flex items-center gap-1 border-t border-subtle pt-3"
               >
-                <BaseButton
+                <Button
                   as="a"
                   :href="`/admin/${paper.id}`"
                   variant="secondary"
@@ -395,8 +391,8 @@ async function confirmDelete() {
                   class="flex-1"
                 >
                   {{ t("admin.papers.manage") }}
-                </BaseButton>
-                <BaseButton
+                </Button>
+                <Button
                   variant="ghost"
                   size="sm"
                   icon-only
@@ -406,8 +402,8 @@ async function confirmDelete() {
                   <template #icon>
                     <Icon name="pencilSquare" class="size-4" />
                   </template>
-                </BaseButton>
-                <BaseButton
+                </Button>
+                <Button
                   variant="ghost"
                   size="sm"
                   icon-only
@@ -417,15 +413,15 @@ async function confirmDelete() {
                   <template #icon
                     ><Icon name="xMark" class="size-4"
                   /></template>
-                </BaseButton>
+                </Button>
               </div>
             </div>
-          </BaseCard>
+          </Card>
         </div>
       </section>
     </template>
 
-    <BaseDialog
+    <Dialog
       v-model:open="editing"
       :title="draft.id ? t('admin.paper.titleEdit') : t('admin.paper.titleNew')"
       :close-label="t('admin.paper.cancel')"
@@ -442,19 +438,19 @@ async function confirmDelete() {
             {{ t("admin.paper.sectionBasics") }}
           </h3>
 
-          <BaseInput
+          <Input
             v-model="draft.title"
             :label="t('admin.paper.name')"
             required
           />
           <div class="grid gap-4 sm:grid-cols-2">
-            <BaseInput
+            <Input
               v-model="draft.slug"
               :label="t('admin.paper.slug')"
               :hint="t('admin.paper.slugHelp')"
               required
             />
-            <BaseSelect
+            <Select
               :model-value="draft.scope"
               :label="t('admin.paper.scope')"
               :options="scopeOptions"
@@ -464,7 +460,7 @@ async function confirmDelete() {
               "
             />
           </div>
-          <BaseInput
+          <Input
             v-model="draft.description"
             :label="t('admin.paper.description')"
             :hint="t('admin.paper.descriptionHelp')"
@@ -482,7 +478,7 @@ async function confirmDelete() {
                之前 division 的说明是挂在控件外面的一个 <p>，于是这一格比隔壁高
                出两行，两列就错开了。 -->
           <div class="grid gap-4 sm:grid-cols-2">
-            <BaseSelect
+            <Select
               :model-value="String(draft.region)"
               :label="t('admin.paper.division')"
               :options="regionOptions"
@@ -491,7 +487,7 @@ async function confirmDelete() {
                 (value: string | number) => (draft.region = Number(value))
               "
             />
-            <BaseSelect
+            <Select
               :model-value="
                 draft.promoteTo === null ? '' : String(draft.promoteTo)
               "
@@ -571,7 +567,7 @@ async function confirmDelete() {
                draft 里的类型悄悄换掉，然后 `drawCount: 0` 和 `drawCount: "0"`
                在别处表现得不一样。 -->
           <div class="grid gap-4 sm:grid-cols-3">
-            <BaseInput
+            <Input
               :model-value="draft.drawCount"
               type="number"
               :label="t('admin.paper.drawCount')"
@@ -580,7 +576,7 @@ async function confirmDelete() {
                 (value: string) => (draft.drawCount = Number(value) || 0)
               "
             />
-            <BaseInput
+            <Input
               :model-value="draft.passMark"
               type="number"
               :label="t('admin.paper.passMark')"
@@ -589,7 +585,7 @@ async function confirmDelete() {
                 (value: string) => (draft.passMark = Number(value) || 0)
               "
             />
-            <BaseInput
+            <Input
               :model-value="draft.timeLimit"
               type="number"
               :label="t('admin.paper.timeLimit')"
@@ -604,7 +600,7 @@ async function confirmDelete() {
         <!-- 开关自己是 justify-between 的，在这么宽的对话框里 label 和滑块会被
              甩到两头、读起来像两件事。装进一个框里它们才是一个控件。 -->
         <section class="rounded-card border border-subtle p-4">
-          <BaseToggle
+          <Toggle
             :model-value="draft.status === 1"
             :label="t('admin.paper.publish')"
             :description="t('admin.paper.publishHelp')"
@@ -616,19 +612,19 @@ async function confirmDelete() {
       </div>
 
       <template #footer>
-        <BaseButton variant="ghost" @click="editing = false">
+        <Button variant="ghost" @click="editing = false">
           {{ t("admin.paper.cancel") }}
-        </BaseButton>
-        <BaseButton :loading="saving" @click="save">
+        </Button>
+        <Button :loading="saving" @click="save">
           {{ saving ? t("admin.paper.saving") : t("admin.paper.save") }}
-        </BaseButton>
+        </Button>
       </template>
-    </BaseDialog>
+    </Dialog>
 
     <!-- 删一份卷子比删一道题重得多：题目、选项、正在作答的卷子都跟着走（成绩
          留着 —— 一场考试下线不该抹掉当初有人通过了它）。值得一个能把卷子名字
          写出来的框。 -->
-    <BaseDialog
+    <Dialog
       :open="!!deleting"
       :title="t('admin.papers.deleteTitle')"
       :close-label="t('admin.paper.cancel')"
@@ -651,13 +647,13 @@ async function confirmDelete() {
         }}
       </p>
       <template #footer>
-        <BaseButton variant="ghost" @click="deleting = null">
+        <Button variant="ghost" @click="deleting = null">
           {{ t("admin.paper.cancel") }}
-        </BaseButton>
-        <BaseButton variant="danger" :loading="removing" @click="confirmDelete">
+        </Button>
+        <Button variant="danger" :loading="removing" @click="confirmDelete">
           {{ t("admin.papers.delete") }}
-        </BaseButton>
+        </Button>
       </template>
-    </BaseDialog>
+    </Dialog>
   </div>
 </template>

@@ -275,7 +275,7 @@ onBeforeUnmount(() => clearInterval(ticker));
 
     <!-- 成绩。交完卷之后这一页就只剩它了 —— 题目留在屏幕上只会让人去核对，
          而核对不出任何东西：上游不发正确答案。 -->
-    <BaseCard v-if="submitted" padding="lg">
+    <Card v-if="submitted" padding="lg">
       <div class="text-center">
         <span
           class="mx-auto flex size-14 items-center justify-center rounded-full"
@@ -323,11 +323,11 @@ onBeforeUnmount(() => clearInterval(ticker));
           {{ t("sit.result.retry") }}
         </p>
 
-        <BaseButton as="a" href="/?done=1" class="mt-6">
+        <Button as="a" href="/?done=1" class="mt-6">
           {{ t("sit.result.back") }}
-        </BaseButton>
+        </Button>
       </div>
-    </BaseCard>
+    </Card>
 
     <template v-else>
       <AlertBox v-if="error" variant="danger" class="mb-6">{{
@@ -378,7 +378,7 @@ onBeforeUnmount(() => clearInterval(ticker));
         </div>
 
         <div class="space-y-4">
-          <BaseCard
+          <Card
             v-for="(question, index) in sitting.questions"
             :key="question.id"
             padding="lg"
@@ -481,13 +481,13 @@ onBeforeUnmount(() => clearInterval(ticker));
                 </span>
               </label>
             </div>
-          </BaseCard>
+          </Card>
         </div>
 
         <div
           class="sticky bottom-0 mt-6 rounded-card border border-subtle bg-chrome p-4"
         >
-          <BaseButton
+          <Button
             block
             size="lg"
             :loading="submitting"
@@ -495,7 +495,7 @@ onBeforeUnmount(() => clearInterval(ticker));
             @click="confirming = true"
           >
             {{ submitting ? t("sit.submitting") : t("sit.submit") }}
-          </BaseButton>
+          </Button>
           <p
             v-if="!allAnswered && !expired"
             class="mt-2 text-center text-xs text-muted"
@@ -506,7 +506,7 @@ onBeforeUnmount(() => clearInterval(ticker));
       </template>
     </template>
 
-    <BaseDialog
+    <Dialog
       v-model:open="confirming"
       :title="t('sit.confirmTitle')"
       :close-label="t('sit.confirmNo')"
@@ -514,13 +514,13 @@ onBeforeUnmount(() => clearInterval(ticker));
     >
       <p class="text-sm text-muted">{{ t("sit.confirmBody") }}</p>
       <template #footer>
-        <BaseButton variant="ghost" @click="confirming = false">
+        <Button variant="ghost" @click="confirming = false">
           {{ t("sit.confirmNo") }}
-        </BaseButton>
-        <BaseButton :loading="submitting" @click="submit">
+        </Button>
+        <Button :loading="submitting" @click="submit">
           {{ t("sit.confirmYes") }}
-        </BaseButton>
+        </Button>
       </template>
-    </BaseDialog>
+    </Dialog>
   </div>
 </template>

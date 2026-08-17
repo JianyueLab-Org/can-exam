@@ -125,9 +125,9 @@ onMounted(async () => {
     <AlertBox v-if="signedOut" variant="info" class="mb-6">
       <p class="font-medium">{{ t("frame.signInRequired") }}</p>
       <p class="mt-1 text-sm">{{ t("frame.signInHint") }}</p>
-      <BaseButton as="a" :href="signInHref" size="sm" class="mt-3">
+      <Button as="a" :href="signInHref" size="sm" class="mt-3">
         {{ t("frame.signIn") }}
-      </BaseButton>
+      </Button>
     </AlertBox>
 
     <template v-else>
@@ -150,20 +150,16 @@ onMounted(async () => {
         </h2>
 
         <div class="space-y-3">
-          <BaseCard
-            v-for="paper in section.papers"
-            :key="paper.id"
-            padding="lg"
-          >
+          <Card v-for="paper in section.papers" :key="paper.id" padding="lg">
             <div class="flex flex-wrap items-start justify-between gap-4">
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <h3 class="text-base font-semibold text-ink">
                     {{ paper.title }}
                   </h3>
-                  <BaseBadge v-if="paper.openSitting" variant="warning">
+                  <Badge v-if="paper.openSitting" variant="warning">
                     {{ t("home.resumeHint") }}
-                  </BaseBadge>
+                  </Badge>
                 </div>
 
                 <p v-if="paper.description" class="mt-1 text-sm text-muted">
@@ -212,7 +208,7 @@ onMounted(async () => {
                 </p>
               </div>
 
-              <BaseButton
+              <Button
                 :disabled="!paper.eligible"
                 :loading="busy === paper.slug"
                 :variant="paper.openSitting ? 'primary' : 'secondary'"
@@ -225,9 +221,9 @@ onMounted(async () => {
                       ? t("home.resume")
                       : t("home.start")
                 }}
-              </BaseButton>
+              </Button>
             </div>
-          </BaseCard>
+          </Card>
         </div>
       </section>
 
@@ -238,9 +234,9 @@ onMounted(async () => {
           {{ t("home.history.title") }}
         </h2>
 
-        <BaseCard v-if="!records.length" padding="lg">
+        <Card v-if="!records.length" padding="lg">
           <p class="text-sm text-muted">{{ t("home.history.empty") }}</p>
-        </BaseCard>
+        </Card>
 
         <ul v-else class="space-y-2">
           <li
@@ -260,13 +256,13 @@ onMounted(async () => {
               <span class="tnum text-sm font-semibold text-ink">
                 {{ record.score }}%
               </span>
-              <BaseBadge :variant="record.passed ? 'success' : 'danger'">
+              <Badge :variant="record.passed ? 'success' : 'danger'">
                 {{
                   record.passed
                     ? t("home.history.passed")
                     : t("home.history.failed")
                 }}
-              </BaseBadge>
+              </Badge>
             </div>
           </li>
         </ul>
