@@ -32,12 +32,14 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, useId } from "vue";
 
-import AlertBox from "@/components/ui/AlertBox.vue";
-import BaseButton from "@/components/ui/BaseButton.vue";
-import BaseCard from "@/components/ui/BaseCard.vue";
-import BaseDialog from "@/components/ui/BaseDialog.vue";
-import Icon from "@/components/ui/Icon.vue";
-import Skeleton from "@/components/ui/Skeleton.vue";
+import {
+  AlertBox,
+  Button,
+  Card,
+  Dialog,
+  Icon,
+  Skeleton,
+} from "@jianyuelab-org/can-ui";
 import { createTranslator } from "@/lib/i18n";
 import {
   api,

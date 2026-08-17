@@ -12,13 +12,15 @@
  */
 import { computed, onMounted, ref } from "vue";
 
-import AlertBox from "@/components/ui/AlertBox.vue";
-import BaseBadge from "@/components/ui/BaseBadge.vue";
-import BaseButton from "@/components/ui/BaseButton.vue";
-import BaseCard from "@/components/ui/BaseCard.vue";
-import EmptyState from "@/components/ui/EmptyState.vue";
-import Icon from "@/components/ui/Icon.vue";
-import PageHeader from "@/components/ui/PageHeader.vue";
+import {
+  AlertBox,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Icon,
+  PageHeader,
+} from "@jianyuelab-org/can-ui";
 import { createTranslator } from "@/lib/i18n";
 import {
   api,
