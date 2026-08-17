@@ -14,9 +14,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
-import BaseButton from "@/components/ui/BaseButton.vue";
-import Icon from "@/components/ui/Icon.vue";
-import ThemeLangControls from "@/components/ui/ThemeLangControls.vue";
+import { Button, Icon, ThemeLangControls } from "@jianyuelab-org/can-ui";
 import { createTranslator } from "@/lib/i18n";
 import { canManageBank, type Member } from "@/lib/member";
 

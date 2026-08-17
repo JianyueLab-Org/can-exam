@@ -22,8 +22,7 @@
  */
 import { ref } from "vue";
 
-import BaseButton from "@/components/ui/BaseButton.vue";
-import Icon from "@/components/ui/Icon.vue";
+import { Button, Icon } from "@jianyuelab-org/can-ui";
 
 const props = withDefaults(
   defineProps<{

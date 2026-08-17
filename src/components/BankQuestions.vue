@@ -46,19 +46,21 @@
  */
 import { computed, ref, watch } from "vue";
 
-import AlertBox from "@/components/ui/AlertBox.vue";
-import BaseBadge from "@/components/ui/BaseBadge.vue";
-import BaseButton from "@/components/ui/BaseButton.vue";
-import BaseCard from "@/components/ui/BaseCard.vue";
-import BaseDialog from "@/components/ui/BaseDialog.vue";
-import BaseInput from "@/components/ui/BaseInput.vue";
-import BaseSelect from "@/components/ui/BaseSelect.vue";
-import BaseTextarea from "@/components/ui/BaseTextarea.vue";
-import BaseToggle from "@/components/ui/BaseToggle.vue";
-import EmptyState from "@/components/ui/EmptyState.vue";
-import Icon from "@/components/ui/Icon.vue";
-import ImageUpload from "@/components/ui/ImageUpload.vue";
-import PageHeader from "@/components/ui/PageHeader.vue";
+import {
+  AlertBox,
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  EmptyState,
+  Icon,
+  Input,
+  PageHeader,
+  Select,
+  Textarea,
+  Toggle,
+} from "@jianyuelab-org/can-ui";
+import ImageUpload from "@/components/ImageUpload.vue";
 import {
   draftProblem,
   emptyQuestion,
