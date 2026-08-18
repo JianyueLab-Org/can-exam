@@ -14,7 +14,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 
-import { Button, Icon, ThemeLangControls } from "@jianyuelab-org/can-ui";
+import { Button, NetworkMenu, ThemeLangControls } from "@jianyuelab-org/can-ui";
 import { createTranslator } from "@/lib/i18n";
 import { canManageBank, type Member } from "@/lib/member";
 
@@ -124,13 +124,20 @@ onBeforeUnmount(() =>
       </nav>
 
       <div class="ml-auto flex items-center gap-2">
-        <a
-          :href="siteOrigin"
-          class="hidden items-center gap-1.5 rounded-control px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface-sunken hover:text-ink sm:flex"
-        >
-          <Icon name="arrowTopRight" class="size-4" />
-          {{ t("mainSite") }}
-        </a>
+        <!--
+          从前这里只有一条「主站」链接，而它是走出考试中心的**唯一**一条路：管制
+          员中心、电子飞行包、雷达、文档一个都到不了。换成 can-ui 的「全网」菜单，
+          主站仍在其中（那一条是公开的），另外几个站也终于在了。
+
+          清单来自 can-ui，所以这个站不再自己记「网络上有哪些站」—— 它本来也没
+          记，这正是问题所在。
+        -->
+        <NetworkMenu
+          :locale="locale"
+          current="exam"
+          :rating="member?.rating"
+          :signed-in="!!member"
+        />
 
         <ThemeLangControls :locale="locale" />
 

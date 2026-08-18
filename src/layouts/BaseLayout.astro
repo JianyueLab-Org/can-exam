@@ -11,6 +11,7 @@
  */
 import "@/styles/globals.css";
 import ThemeScript from "@jianyuelab-org/can-ui/components/ThemeScript.astro";
+import SiteFooter from "@jianyuelab-org/can-ui/components/SiteFooter.vue";
 import SiteHeader from "@/components/SiteHeader.vue";
 import { getLocale, getMessages } from "@/lib/i18n";
 import type { Member } from "@/lib/member";
@@ -54,7 +55,7 @@ const pageTitle = title
     <meta name="robots" content="noindex, nofollow" />
     <ThemeScript />
   </head>
-  <body class="min-h-dvh bg-surface text-ink">
+  <body class="flex min-h-dvh flex-col bg-surface text-ink">
     <SiteHeader
       messages={messages}
       locale={locale}
@@ -66,11 +67,24 @@ const pageTitle = title
     />
     <main
       class:list={[
-        "mx-auto px-4 py-8 sm:px-6 lg:px-8",
+        "mx-auto w-full flex-1 px-4 py-8 sm:px-6 lg:px-8",
         wide ? "max-w-7xl" : "max-w-5xl",
       ]}
     >
       <slot />
     </main>
+    {
+      /* 这个站从前没有页脚。走出考试中心的唯一一条路是页眉上那个「主站」链接 ——
+         管制员中心、电子飞行包、文档、雷达一个都到不了。页脚来自 can-ui，所以这
+         里不存在第二份「网络上有哪些站」的清单，也不会和别的站漂开。
+
+         不带 hydration：整块都是链接，没有状态。 */
+    }
+    <SiteFooter
+      locale={locale}
+      current="exam"
+      rating={member?.rating}
+      signedIn={!!member}
+    />
   </body>
 </html>
