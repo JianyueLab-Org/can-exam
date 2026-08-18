@@ -12,7 +12,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import ExamCentre from "@/components/ExamCentre.vue";
 import { getLocale, getMessages } from "@/lib/i18n";
 import type { AttemptRecord, PaperSummary } from "@/lib/exams";
-import { webOrigin } from "@/server/config";
+import { publicOrigin, webOrigin } from "@/server/config";
 import { readMember } from "@/server/session";
 import { readApi } from "@/server/upstream";
 
@@ -40,7 +40,20 @@ if (member) {
   records = history?.data?.records ?? [];
 }
 
-const signInHref = `${webOrigin()}/signin?callbackUrl=${encodeURIComponent(Astro.url.href)}`;
+/**
+ * 登录后回到这一页。
+ *
+ * **用 `publicOrigin()` 而不是 `Astro.url.href`。** 这个站跑在 TLS 终止的反代后
+ * 面，请求 URL 的 origin 推出来是 `http://`，而 can-web 的回跳白名单是按 origin
+ * 精确比对的（`src/lib/callbackUrl.ts`），`http://` 版本配不上 `https://` 那一
+ * 条，于是被静默拒掉、回落 `/pilots` —— 白做一场，而且没有任何报错。
+ *
+ * 同仓库的 `SiteHeader.vue` 用的是 `window.location.href`，那是浏览器侧、协议本
+ * 来就对，所以只有这一处需要改。
+ */
+const signInHref = `${webOrigin()}/signin?callbackUrl=${encodeURIComponent(
+  `${publicOrigin()}${Astro.url.pathname}${Astro.url.search}`,
+)}`;
 ---
 
 <BaseLayout member={member} active="exams">
