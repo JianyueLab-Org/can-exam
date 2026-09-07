@@ -9,12 +9,13 @@ Tailwind v4。**没有自己的登录，没有数据库，题库和答案一行�
 ## 命令
 
 ```bash
-bun run dev      # :4324（4321 can-web，4322 can-dev，4323 can-radar）
-bun run lint     # format:check + astro check + vue-tsc
+bun run dev      # :4325（4321 can-web，4322 can-dev，4323 can-radar，4324 can-efb）
+bun run lint     # format:check + astro check + vue-tsc + bun test
 bun run build && bun run start
 ```
 
-没有测试套件。门禁是 `bun run lint` 加一次 `bun run build`。
+门禁是 `bun run lint` 加一次 `bun run build`。测试只有一份（`src/server/body.ts`
+的请求体上限），跟在 lint 后面跑 —— 形状照 can-efb。
 `astro check` 看不见 `.vue`，所以 `typecheck` 同时跑 `vue-tsc`——两个都要留着。
 
 真正的逻辑测试在上游：抽题、打乱、判卷都在 can-api 的 `internal/exam`，那边

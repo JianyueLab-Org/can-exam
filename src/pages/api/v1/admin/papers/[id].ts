@@ -1,5 +1,6 @@
 import type { APIContext } from "astro";
 
+import { readCappedText } from "@/server/body";
 import { crossOrigin, forbidden } from "@/server/guard";
 import { LIMITS, clientIp, enforce } from "@/server/rateLimit";
 import { callApi, relay } from "@/server/upstream";
@@ -14,10 +15,14 @@ export const PATCH = async (context: APIContext) => {
   const limited = enforce([[`admin:ip:${clientIp(context)}`, LIMITS.admin]]);
   if (limited) return limited;
 
+  // 上限见 `server/body.ts`：读之前就设好，而不是读完再量。
+  const read = await readCappedText(context.request);
+  if (!read.ok) return read.response;
+
   return relay(
     await callApi(context, path(context), {
       method: "PATCH",
-      body: await context.request.text(),
+      body: read.value,
     }),
   );
 };

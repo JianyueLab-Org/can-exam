@@ -1,5 +1,6 @@
 import type { APIContext } from "astro";
 
+import { readCappedText } from "@/server/body";
 import { crossOrigin, forbidden } from "@/server/guard";
 import { LIMITS, clientIp, enforce } from "@/server/rateLimit";
 import { callApi, relay } from "@/server/upstream";
@@ -36,10 +37,16 @@ export const POST = async (context: APIContext) => {
   ]);
   if (limited) return limited;
 
+  // **交卷的 body 也要挡。** 这条路和上传图片那条的区别只是没人注意到 ——
+  // 它一样是匿名可达的（鉴权在上游，在这次读之后），一样把整个 body 读进堆。
+  // 附带损害更难看：把这个进程压垮，代价是一个考生交不上他那张一次性的卷子。
+  const read = await readCappedText(context.request);
+  if (!read.ok) return read.response;
+
   return relay(
     await callApi(context, path(context), {
       method: "POST",
-      body: await context.request.text(),
+      body: read.value,
     }),
   );
 };
