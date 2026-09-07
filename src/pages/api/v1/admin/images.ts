@@ -1,5 +1,6 @@
 import type { APIContext } from "astro";
 
+import { readCapped } from "@/server/body";
 import { crossOrigin, forbidden } from "@/server/guard";
 import { LIMITS, clientIp, enforce } from "@/server/rateLimit";
 import { callApi, relay } from "@/server/upstream";
@@ -38,25 +39,29 @@ const UPLOAD_TIMEOUT_MS = 30_000;
  */
 const MAX_BYTES = 4 * 1024 * 1024;
 
+/** 上限的说法。和 `server/body.ts` 的默认那句不一样，因为这条路上的人在传图。 */
+const TOO_LARGE = "图片太大了，上限是 4 MB。";
+
 export const POST = async (context: APIContext) => {
   if (crossOrigin(context)) return forbidden();
 
   const limited = enforce([[`admin:ip:${clientIp(context)}`, LIMITS.admin]]);
   if (limited) return limited;
 
-  // Content-Length 先看一眼：能在读之前拒绝的就别读进来。它可以缺席也可以撒
-  // 谎，所以下面读完还要再量一次真实长度。
-  const declared = Number(context.request.headers.get("content-length") ?? "0");
-  if (declared > MAX_BYTES) return tooLarge();
+  // **边读边量。** 从前这里是「看一眼 Content-Length，然后 arrayBuffer()，读
+  // 完再量真实长度」—— 而 Content-Length 可以缺席（分块编码就没有这个头），缺
+  // 席时第一步看到 0、放行，整个 body 完整进堆之后才被拒绝。读完再量没有阻止
+  // 任何一个字节被读进来。理由和做法都写在 `server/body.ts` 顶上。
+  const read = await readCapped(context.request, MAX_BYTES, TOO_LARGE);
+  if (!read.ok) return read.response;
 
-  const body = await context.request.arrayBuffer();
+  const body = read.value;
   if (body.byteLength === 0) {
     return Response.json(
       { error: "invalid_request", message: "没有收到文件。" },
       { status: 400 },
     );
   }
-  if (body.byteLength > MAX_BYTES) return tooLarge();
 
   return relay(
     await callApi(context, UPSTREAM_PATH, {
@@ -71,11 +76,3 @@ export const POST = async (context: APIContext) => {
     }),
   );
 };
-
-/** 形状和上游的 `too_large` 一致，这样页面只认一个码。 */
-function tooLarge(): Response {
-  return Response.json(
-    { error: "too_large", message: "图片太大了，上限是 4 MB。" },
-    { status: 413 },
-  );
-}

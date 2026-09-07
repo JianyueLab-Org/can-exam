@@ -41,6 +41,13 @@ export const webOrigin = () =>
  * 只有一个用途：比对写操作的 `Origin` 头（见 `guard.ts`）。它是**显式配置**
  * 而不是从 `Host` 头推的 —— 这个站跑在 TLS 终止的反代后面，从请求头推出来的
  * 东西正是反代能影响的东西。
+ *
+ * **默认值必须跟着 `package.json` 的 `--port` 走。** 它曾经停在 4324，而开发
+ * 服务器早已让给 can-efb、搬到了 4325 —— 于是不设 `PUBLIC_ORIGIN` 就本地跑
+ * `bun run dev` 的人，浏览器发来的是 `http://localhost:4325`、这里比的是 4324，
+ * `crossOrigin()` 恒真，**每一个写操作都 403**：发卷、交卷、题库的每一次保存、
+ * 登出。线上不受影响（`deploy/k8s.yaml` 显式设了这个值），所以它只咬开发机，
+ * 而且咬得毫无线索。
  */
 export const publicOrigin = () =>
-  trim(process.env.PUBLIC_ORIGIN || "http://localhost:4324");
+  trim(process.env.PUBLIC_ORIGIN || "http://localhost:4325");
