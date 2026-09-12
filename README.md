@@ -49,7 +49,7 @@ Astro SSR + Vue 岛屿 + Tailwind v4，和 can-dev、can-radar 同一套。
 
 ```bash
 bun install
-bun run dev          # http://localhost:4324
+bun run dev          # http://localhost:4325（4324 是 can-efb 的，它先占的）
 ```
 
 `.env.example` 复制成 `.env`。本地开发一般只需要改一处：如果主站也在本地跑，把
