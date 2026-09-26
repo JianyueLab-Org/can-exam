@@ -12,6 +12,7 @@
 import "@/styles/globals.css";
 import ThemeScript from "@jianyuelab-org/can-ui/components/ThemeScript.astro";
 import SiteFooter from "@jianyuelab-org/can-ui/components/SiteFooter.vue";
+import type { SiteOrigins } from "@jianyuelab-org/can-ui";
 import Header from "@/components/Header.vue";
 import { getLocale, getMessages } from "@/lib/i18n";
 import type { Member } from "@/lib/member";
@@ -37,6 +38,10 @@ const messages = getMessages(locale, "frame");
 const pageTitle = title
   ? `${title} · Cerulean Aviation Network`
   : "考试中心 · Cerulean Aviation Network";
+
+// 开发环境下把页眉、页脚的「全网」链接指回本机的主站；自己的 key（exam）不
+// 填，站头链接自己的路径从不走 siteUrl。
+const origins: SiteOrigins = { web: webOrigin() };
 ---
 
 <!doctype html>
@@ -68,6 +73,7 @@ const pageTitle = title
       member={member}
       pathname={Astro.url.pathname}
       siteOrigin={webOrigin()}
+      origins={origins}
       client:load
     />
     <main
@@ -92,6 +98,7 @@ const pageTitle = title
       current="exam"
       rating={member?.rating}
       signedIn={!!member}
+      origins={origins}
     />
   </body>
 </html>

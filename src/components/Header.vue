@@ -15,7 +15,11 @@
  *   件监听器，`@signout` 只能在一个 Vue 组件里接。
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { SiteHeader, type NavChild } from "@jianyuelab-org/can-ui";
+import {
+  SiteHeader,
+  type NavChild,
+  type SiteOrigins,
+} from "@jianyuelab-org/can-ui";
 import { createTranslator } from "@/lib/i18n";
 import { canManageBank, type Member } from "@/lib/member";
 
@@ -26,6 +30,8 @@ const props = defineProps<{
   /** 当前路径，决定哪一项亮。 */
   pathname: string;
   siteOrigin: string;
+  /** 开发环境的站点地址覆盖，见 BaseLayout。 */
+  origins?: SiteOrigins;
 }>();
 
 const t = createTranslator(props.messages);
@@ -112,6 +118,7 @@ onBeforeUnmount(() =>
     :rating="member?.rating"
     :sign-in-href="signInHref"
     :labels="labels"
+    :origins="origins"
     @signout="signOut"
   >
     <template v-if="member" #account>
