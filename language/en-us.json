@@ -1,7 +1,5 @@
 {
   "frame": {
-    "title": "Exam Centre",
-    "subtitle": "Cerulean Aviation Network",
     "signIn": "Sign in",
     "signOut": "Sign out",
     "examCentre": "Exams",
@@ -10,7 +8,10 @@
     "signInHint": "The exam centre needs an account. Sign in on the main site, then come back to this page.",
     "loading": "Loading…",
     "retry": "Try again",
-    "error": "Something went wrong. Try again shortly."
+    "error": "Something went wrong. Try again shortly.",
+    "skipToContent": "Skip to main content",
+    "openMenu": "Open main menu",
+    "closeMenu": "Close menu"
   },
   "home": {
     "title": "Exam Centre",

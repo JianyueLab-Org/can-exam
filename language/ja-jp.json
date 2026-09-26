@@ -1,7 +1,5 @@
 {
   "frame": {
-    "title": "試験センター",
-    "subtitle": "Cerulean Aviation Network",
     "signIn": "ログイン",
     "signOut": "ログアウト",
     "examCentre": "試験",
@@ -10,7 +8,10 @@
     "signInHint": "試験センターの利用にはログインが必要です。ログインはメインサイトで行い、その後このページに戻ってください。",
     "loading": "読み込み中…",
     "retry": "再試行",
-    "error": "問題が発生しました。しばらくしてからお試しください。"
+    "error": "問題が発生しました。しばらくしてからお試しください。",
+    "skipToContent": "本文へスキップ",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる"
   },
   "home": {
     "title": "試験センター",

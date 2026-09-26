@@ -48,7 +48,7 @@ if (member) {
  * 精确比对的（`src/lib/callbackUrl.ts`），`http://` 版本配不上 `https://` 那一
  * 条，于是被静默拒掉、回落 `/pilots` —— 白做一场，而且没有任何报错。
  *
- * 同仓库的 `SiteHeader.vue` 用的是 `window.location.href`，那是浏览器侧、协议本
+ * 同仓库的 `Header.vue` 用的是 `window.location.href`，那是浏览器侧、协议本
  * 来就对，所以只有这一处需要改。
  */
 const signInHref = `${webOrigin()}/signin?callbackUrl=${encodeURIComponent(
@@ -56,7 +56,7 @@ const signInHref = `${webOrigin()}/signin?callbackUrl=${encodeURIComponent(
 )}`;
 ---
 
-<BaseLayout member={member} active="exams">
+<BaseLayout member={member}>
   <ExamCentre
     messages={messages}
     papers={papers}

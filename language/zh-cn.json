@@ -1,7 +1,5 @@
 {
   "frame": {
-    "title": "考试中心",
-    "subtitle": "Cerulean Aviation Network",
     "signIn": "登录",
     "signOut": "退出",
     "examCentre": "考试",
@@ -10,7 +8,10 @@
     "signInHint": "考试中心需要登录后才能使用。登录入口在主站，登录完回到这一页即可。",
     "loading": "加载中…",
     "retry": "重试",
-    "error": "出了点问题，请稍后再试。"
+    "error": "出了点问题，请稍后再试。",
+    "skipToContent": "跳到主要内容",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单"
   },
   "home": {
     "title": "考试中心",

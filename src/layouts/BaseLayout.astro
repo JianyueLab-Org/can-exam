@@ -12,7 +12,7 @@
 import "@/styles/globals.css";
 import ThemeScript from "@jianyuelab-org/can-ui/components/ThemeScript.astro";
 import SiteFooter from "@jianyuelab-org/can-ui/components/SiteFooter.vue";
-import SiteHeader from "@/components/SiteHeader.vue";
+import Header from "@/components/Header.vue";
 import { getLocale, getMessages } from "@/lib/i18n";
 import type { Member } from "@/lib/member";
 import { webOrigin } from "@/server/config";
@@ -20,8 +20,6 @@ import { webOrigin } from "@/server/config";
 interface Props {
   title?: string;
   member: Member | null;
-  /** 高亮页眉上的哪一项。 */
-  active?: "exams" | "admin";
   /**
    * 给管理页用的宽版容器。
    *
@@ -32,7 +30,7 @@ interface Props {
   wide?: boolean;
 }
 
-const { title, member, active = "exams", wide = false } = Astro.props;
+const { title, member, wide = false } = Astro.props;
 
 const locale = getLocale(Astro.cookies);
 const messages = getMessages(locale, "frame");
@@ -56,16 +54,17 @@ const pageTitle = title
     <ThemeScript />
   </head>
   <body class="flex min-h-dvh flex-col bg-surface text-ink">
-    <SiteHeader
+    <Header
       messages={messages}
       locale={locale}
       member={member}
-      active={active}
+      pathname={Astro.url.pathname}
       siteOrigin={webOrigin()}
-      wide={wide}
       client:load
     />
     <main
+      id="main-content"
+      tabindex="-1"
       class:list={[
         "mx-auto w-full flex-1 px-4 py-8 sm:px-6 lg:px-8",
         wide ? "max-w-7xl" : "max-w-5xl",

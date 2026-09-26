@@ -49,12 +49,7 @@ if (member) {
 }
 ---
 
-<BaseLayout
-  title={paper?.title ?? "题库管理"}
-  member={member}
-  active="admin"
-  wide
->
+<BaseLayout title={paper?.title ?? "题库管理"} member={member} wide>
   <BankQuestions
     messages={messages}
     paper={paper}
