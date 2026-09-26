@@ -630,7 +630,9 @@ watch(editorOpen, (open) => {
               :model-value="search"
               :label="t('admin.questions.search')"
               :placeholder="t('admin.questions.searchPlaceholder')"
-              @update:model-value="(value: string) => (search = value)"
+              @update:model-value="
+                (value: string | number) => (search = String(value))
+              "
             />
           </div>
           <Select

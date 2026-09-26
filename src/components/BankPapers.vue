@@ -456,7 +456,8 @@ async function confirmDelete() {
               :options="scopeOptions"
               :hint="t('admin.paper.scopeHelp')"
               @update:model-value="
-                (value: string) => (draft.scope = value as ExamScope)
+                (value: string | number) =>
+                  (draft.scope = String(value) as ExamScope)
               "
             />
           </div>
@@ -573,7 +574,8 @@ async function confirmDelete() {
               :label="t('admin.paper.drawCount')"
               :hint="t('admin.paper.drawHelp')"
               @update:model-value="
-                (value: string) => (draft.drawCount = Number(value) || 0)
+                (value: string | number) =>
+                  (draft.drawCount = Number(value) || 0)
               "
             />
             <Input
@@ -582,7 +584,8 @@ async function confirmDelete() {
               :label="t('admin.paper.passMark')"
               :hint="t('admin.paper.passMarkHelp')"
               @update:model-value="
-                (value: string) => (draft.passMark = Number(value) || 0)
+                (value: string | number) =>
+                  (draft.passMark = Number(value) || 0)
               "
             />
             <Input
@@ -591,7 +594,8 @@ async function confirmDelete() {
               :label="t('admin.paper.timeLimit')"
               :hint="t('admin.paper.timeLimitHelp')"
               @update:model-value="
-                (value: string) => (draft.timeLimit = Number(value) || 0)
+                (value: string | number) =>
+                  (draft.timeLimit = Number(value) || 0)
               "
             />
           </div>
