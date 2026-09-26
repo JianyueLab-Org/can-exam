@@ -53,7 +53,15 @@ const pageTitle = title
     <meta name="robots" content="noindex, nofollow" />
     <ThemeScript />
   </head>
-  <body class="flex min-h-dvh flex-col bg-surface text-ink">
+  <body
+    class:list={[
+      "flex min-h-dvh flex-col bg-surface text-ink",
+      /* SiteHeader（can-ui）内部的 <nav> 固定 max-w-7xl，不认这个 prop —— 这
+         个类只用来在 globals.css 里，从站点这一侧把非 wide 页面的页眉宽度收回
+         max-w-5xl，和 <main> 对齐。 */
+      !wide && "chrome-header-narrow",
+    ]}
+  >
     <Header
       messages={messages}
       locale={locale}

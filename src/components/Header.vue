@@ -47,6 +47,20 @@ const nav = computed<NavChild[]>(() => {
   return items;
 });
 
+/**
+ * 传给 SiteHeader 用来判断哪一项该亮的路径 —— 不是原样的 `pathname`。
+ *
+ * `isCurrentPath("/", pathname)` 只在 pathname 恰好是 "/" 时为真，`/sit/…`、
+ * 以后可能有的 `/paper/…`、`/attempt/…` 都不命中，于是候考、答题这些页面上
+ * 「考试中心」灭着。旧页眉（迁到 SiteHeader 之前那版）传的是显式的
+ * `active: "exams" | "admin"`，默认就是 "exams"——`/admin` 之外的每一页都点
+ * 亮它。这里换一种方式保住同一条规则：不在 `/admin` 下的路径一律当作 "/"
+ * 传给 SiteHeader，`/admin/*` 仍然用真实路径去命中它自己那一项。
+ */
+const navPathname = computed(() =>
+  props.pathname.startsWith("/admin") ? props.pathname : "/",
+);
+
 const labels = computed(() => ({
   skip: t("skipToContent"),
   menu: t("openMenu"),
@@ -92,7 +106,7 @@ onBeforeUnmount(() =>
   <SiteHeader
     current="exam"
     :locale="locale"
-    :pathname="pathname"
+    :pathname="navPathname"
     :nav="nav"
     :signed-in="!!member"
     :rating="member?.rating"
