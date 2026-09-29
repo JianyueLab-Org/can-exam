@@ -2,15 +2,16 @@
 /**
  * 考场。
  *
- * 地址上带 `?token=` 时，卷子在服务端取好传进去 —— 刷新页面回到同一张卷子，
- * 题目和选项顺序都不变。不带 token 时这里**不发卷**：发卷是一次写操作，用
- * GET 表达它意味着一次预取或者一次爬虫就能替人抽走一张卷子。岛屿挂载后自己
- * POST 一次，然后把 token 补进地址栏。
+ * 带 `?token=` 时卷子在服务端取好传进去，刷新回到同一张卷子。不带 token 时这
+ * 里不发卷：发卷是写操作，岛屿挂载后 POST 一次再把 token 补进地址栏。
+ *
+ * 没登录去主站登录，回跳地址是这一页的完整地址。
  */
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import SitPaper from "@/components/SitPaper.vue";
 import { getLocale, getMessages } from "@/lib/i18n";
 import type { Sitting } from "@/lib/exams";
+import { signInUrl } from "@/server/config";
 import { readMember } from "@/server/session";
 import { callApi } from "@/server/upstream";
 
@@ -20,8 +21,7 @@ const messages = getMessages(locale);
 
 const member = await readMember(Astro);
 if (!member) {
-  // 没登录就没有卷子可谈。回首页，那里有登录入口和说明。
-  return Astro.redirect("/", 302);
+  return Astro.redirect(signInUrl(Astro.url), 302);
 }
 
 const token = Astro.url.searchParams.get("token");
@@ -33,6 +33,10 @@ if (token) {
     Astro,
     `/api/v1/pilot/exam/sittings/${encodeURIComponent(token)}`,
   );
+  // 两次调用之间会话过期：和没登录一样处理。
+  if (result.status === 401) {
+    return Astro.redirect(signInUrl(Astro.url), 302);
+  }
   try {
     const body = JSON.parse(result.body);
     if (result.status >= 200 && result.status < 300)

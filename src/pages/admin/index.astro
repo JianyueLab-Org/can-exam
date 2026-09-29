@@ -2,41 +2,80 @@
 /**
  * 题库管理：卷子清单。
  *
- * 上游是 `/api/v1/super/exam/papers`，挂在 `WithSuper`（教员及以上）后面，再
- * 由它自己按 division 过滤 —— 一个 JPN 的教员在这里拿到的只有 JPN 的卷子。
- *
- * **这一页不自己判断权限。** 读不到就是 `forbidden`，岛屿显示一句话。理由见
- * `src/pages/api/v1/admin/papers.ts`：两处各判一次的话，两处会慢慢长得不一
- * 样，而更宽松的那一处就是实际生效的那一处。
+ * 上游 `/api/v1/super/exam/papers` 挂在 `WithSuper` 后面，再按 division 过滤。
+ * 这一页不自己判断权限：上游答 403 就在原地址渲染 `NoAccess`，HTTP 403。
  */
+import { NoAccess, originsFromEnv } from "@jianyuelab-org/can-ui";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BankPapers from "@/components/BankPapers.vue";
-import { getLocale, getMessages } from "@/lib/i18n";
+import { bankRefusal } from "@/lib/access";
 import type { AdminPaper, BankAuthority } from "@/lib/admin";
+import { getLocale, getMessages, useTranslations } from "@/lib/i18n";
+import { signInUrl } from "@/server/config";
 import { readMember } from "@/server/session";
-import { readApi } from "@/server/upstream";
+import { callApi } from "@/server/upstream";
 
 const locale = getLocale(Astro.cookies);
 const messages = getMessages(locale);
+const frameMessages = getMessages(locale, "frame");
+const t = useTranslations(locale, "admin");
 
 const member = await readMember(Astro);
-const response = member
-  ? await readApi<{
+if (!member) {
+  return Astro.redirect(signInUrl(Astro.url), 302);
+}
+
+const result = await callApi(Astro, "/api/v1/super/exam/papers");
+if (result.status === 401) {
+  return Astro.redirect(signInUrl(Astro.url), 302);
+}
+
+const refusal = bankRefusal(member, result.status, t("access.permission"));
+if (refusal) Astro.response.status = 403;
+
+let papers: AdminPaper[] = [];
+// 上游算好的权限：能管哪些 division、最高能授予到哪一级。
+let authority: BankAuthority | null = null;
+let failed = true;
+if (result.status >= 200 && result.status < 300) {
+  try {
+    const body = JSON.parse(result.body) as {
       data?: { papers: AdminPaper[]; authority: BankAuthority };
-    }>(Astro, "/api/v1/super/exam/papers")
-  : null;
-const papers = response?.data?.papers ?? [];
-// 上游算好的权限：能管哪些 division、最高能授予到哪一级。前端不自己算 —— 那要
-// 查 division 表，而这个站点不碰数据库。
-const authority = response?.data?.authority ?? null;
+    };
+    papers = body.data?.papers ?? [];
+    authority = body.data?.authority ?? null;
+    failed = false;
+  } catch {
+    // 读不懂就当失败，岛屿显示那一句。
+  }
+}
 ---
 
-<BaseLayout title="题库管理" member={member} wide>
-  <BankPapers
-    messages={messages}
-    papers={papers}
-    authority={authority}
-    forbidden={!response}
-    client:load
-  />
+<BaseLayout title={t("title")} member={member} wide>
+  {
+    refusal ? (
+      <NoAccess
+        reason={refusal}
+        userName={member.name}
+        userId={member.username}
+        current="exam"
+        locale={locale}
+        rating={member.rating}
+        messages={frameMessages}
+        origins={originsFromEnv(import.meta.env)}
+      >
+        <p slot="next-steps" class="text-sm text-muted">
+          {t("access.hint")}
+        </p>
+      </NoAccess>
+    ) : (
+      <BankPapers
+        messages={messages}
+        papers={papers}
+        authority={authority}
+        forbidden={failed}
+        client:load
+      />
+    )
+  }
 </BaseLayout>

@@ -1,60 +1,87 @@
 ---
 /**
- * 一份卷子的题库。
+ * 一份卷子的题库。全站唯一渲染正确答案的页面。
  *
- * **这是全站唯一会把正确答案渲染出来的页面。** 它和考生那一侧走的是两条不同
- * 的上游路径、两个不同的 TypeScript 类型（`lib/admin.ts` 对 `lib/exams.ts`），
- * 这一点是有意维持的：类型不共享，「在考生页面上顺手读一下 isCorrect」就编译
- * 不过，而不是在运行时悄悄拿到 undefined。
+ * 类型走 `lib/admin.ts`，和考生侧的 `lib/exams.ts` 不共享。上游对清单答 403 时
+ * 在原地址渲染 `NoAccess`，HTTP 403。别的 division 的卷子不在过滤后的清单里，
+ * 岛屿照旧显示「没有权限」。
  */
+import { NoAccess, originsFromEnv } from "@jianyuelab-org/can-ui";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BankQuestions from "@/components/BankQuestions.vue";
-import { getLocale, getMessages } from "@/lib/i18n";
+import { bankRefusal } from "@/lib/access";
 import type { AdminPaper, AdminQuestion } from "@/lib/admin";
+import { getLocale, getMessages, useTranslations } from "@/lib/i18n";
+import { signInUrl } from "@/server/config";
 import { readMember } from "@/server/session";
-import { readApi } from "@/server/upstream";
+import { callApi, readApi } from "@/server/upstream";
 
 const { id } = Astro.params;
 const locale = getLocale(Astro.cookies);
 const messages = getMessages(locale);
+const frameMessages = getMessages(locale, "frame");
+const t = useTranslations(locale, "admin");
 
 const member = await readMember(Astro);
+if (!member) {
+  return Astro.redirect(signInUrl(Astro.url), 302);
+}
+
+// 上游没有按 id 读卷子的管理端路由，卷子的元信息只在清单里。
+const [list, bank] = await Promise.all([
+  callApi(Astro, "/api/v1/super/exam/papers"),
+  readApi<{ data?: { questions: AdminQuestion[] } }>(
+    Astro,
+    `/api/v1/super/exam/papers/${encodeURIComponent(id ?? "")}/questions`,
+  ),
+]);
+if (list.status === 401) {
+  return Astro.redirect(signInUrl(Astro.url), 302);
+}
+
+const refusal = bankRefusal(member, list.status, t("access.permission"));
+if (refusal) Astro.response.status = 403;
 
 let paper: AdminPaper | null = null;
 let questions: AdminQuestion[] = [];
 let forbidden = true;
-
-if (member) {
-  // 卷子清单和题目一起读：上游没有「按 id 读一份卷子」的管理端路由，卷子的元
-  // 信息（抽题数、标题）只有在清单里。多读几行，省一条路由。
-  //
-  // 顺带也是一道权限检查：清单是上游按 division 过滤过的，所以别人 division
-  // 的卷子在这里根本 find 不到，`paper` 是 null，页面显示「没有权限」。题目那
-  // 一次调用上游也会自己判（那边答 404），两边独立成立。
-  const [papers, bank] = await Promise.all([
-    readApi<{ data?: { papers: AdminPaper[] } }>(
-      Astro,
-      "/api/v1/super/exam/papers",
-    ),
-    readApi<{ data?: { questions: AdminQuestion[] } }>(
-      Astro,
-      `/api/v1/super/exam/papers/${encodeURIComponent(id ?? "")}/questions`,
-    ),
-  ]);
-  if (papers) {
+if (list.status >= 200 && list.status < 300) {
+  try {
+    const body = JSON.parse(list.body) as { data?: { papers: AdminPaper[] } };
     forbidden = false;
-    paper = papers.data?.papers.find((item) => String(item.id) === id) ?? null;
+    paper = body.data?.papers.find((item) => String(item.id) === id) ?? null;
     questions = bank?.data?.questions ?? [];
+  } catch {
+    // 读不懂就当失败。
   }
 }
 ---
 
-<BaseLayout title={paper?.title ?? "题库管理"} member={member} wide>
-  <BankQuestions
-    messages={messages}
-    paper={paper}
-    questions={questions}
-    forbidden={forbidden}
-    client:load
-  />
+<BaseLayout title={paper?.title ?? t("title")} member={member} wide>
+  {
+    refusal ? (
+      <NoAccess
+        reason={refusal}
+        userName={member.name}
+        userId={member.username}
+        current="exam"
+        locale={locale}
+        rating={member.rating}
+        messages={frameMessages}
+        origins={originsFromEnv(import.meta.env)}
+      >
+        <p slot="next-steps" class="text-sm text-muted">
+          {t("access.hint")}
+        </p>
+      </NoAccess>
+    ) : (
+      <BankQuestions
+        messages={messages}
+        paper={paper}
+        questions={questions}
+        forbidden={forbidden}
+        client:load
+      />
+    )
+  }
 </BaseLayout>
