@@ -14,8 +14,8 @@ bun run lint     # format:check + astro check + vue-tsc + bun test
 bun run build && bun run start
 ```
 
-门禁是 `bun run lint` 加一次 `bun run build`。测试只有一份（`src/server/body.ts`
-的请求体上限），跟在 lint 后面跑 —— 形状照 can-efb。
+门禁是 `bun run lint`、`bun run build`、`bun run check:pages`，CI 同样三条（`check.yml`）。
+测试跟在 lint 后面跑。
 `astro check` 看不见 `.vue`，所以 `typecheck` 同时跑 `vue-tsc`——两个都要留着。
 
 真正的逻辑测试在上游：抽题、打乱、判卷都在 can-api 的 `internal/exam`，那边
@@ -85,10 +85,12 @@ Astro 在 SSR 下默认从 `Host` 头推出本站 origin 再和浏览器的 `Ori
 值不是从请求头推的，反代动不了它。**部署里 `PUBLIC_ORIGIN` 不能省** —— 省掉它
 交卷会稳定地 403，而那是这个站点最不能坏的一个动作。
 
-**6. 页眉的跨站链接必须走 `siteOrigin`。**
+**6. 跨站地址不写相对路径。**
 
-这里是 exam.ceruleanavi.net，写 `href="/roster"` 会打在考试中心自己的域名上然后
-404。开发机上不会暴露（那边主站和这个站都在 localhost），线上才炸。
+外壳是 can-ui 的 `CanFrame`（`src/components/Frame.vue`）。登录地址由
+`src/server/config.ts` 的 `signInUrl()` 拼，其他站的地址来自 `originsFromEnv`
+（开发机设 `PUBLIC_CAN_WEB_ORIGIN`）。写 `href="/roster"` 会打在考试中心自己的
+域名上然后 404。
 
 ## 多选题：判分规则在上游，这一侧只画界面
 
@@ -137,15 +139,15 @@ layout 里记着题号，题上的图删掉了那张卷子就成了半张。孤�
 发，在服务端带着 cookie 发出（`src/server/upstream.ts` 是唯一一条路）。于是不需
 要 CORS —— exam.ceruleanavi.net 不在 can-api 的 `ALLOWED_ORIGINS` 里，也不需要在。
 
-| 本站                                          | can-api                                     |
-| --------------------------------------------- | ------------------------------------------- |
-| `GET /api/v1/papers`                          | `GET /api/v1/pilot/exam/papers`             |
-| `GET /api/v1/history`                         | `GET /api/v1/pilot/exam`                    |
-| `POST /api/v1/sit/{slug}`                     | `POST /api/v1/pilot/exam/papers/{slug}/sit` |
-| `GET·POST /api/v1/sittings/{token}`           | `…/pilot/exam/sittings/{token}`             |
-| `/api/v1/admin/**`                            | `/api/v1/super/exam/**`（WithSuper）        |
-| `POST /api/v1/admin/images`                   | `POST /api/v1/super/exam/images`            |
-| `GET /api/v1/session`、`POST /api/v1/signout` | `…/auth/session`、`…/auth/signout`          |
+| 本站                                               | can-api                                     |
+| -------------------------------------------------- | ------------------------------------------- |
+| `GET /api/v1/papers`                               | `GET /api/v1/pilot/exam/papers`             |
+| `GET /api/v1/history`                              | `GET /api/v1/pilot/exam`                    |
+| `POST /api/v1/sit/{slug}`                          | `POST /api/v1/pilot/exam/papers/{slug}/sit` |
+| `GET·POST /api/v1/sittings/{token}`                | `…/pilot/exam/sittings/{token}`             |
+| `/api/v1/admin/**`                                 | `/api/v1/super/exam/**`（WithSuper）        |
+| `POST /api/v1/admin/images`                        | `POST /api/v1/super/exam/images`            |
+| `GET /api/v1/session`、`POST /api/v1/auth/signout` | `…/auth/session`、`…/auth/signout`          |
 
 **这一侧一次授权判断都不做。** 不看 rating、不看会话内容，只把 cookie 转过去、
 把状态码抄回来。两处各判一次的话，两处会慢慢长得不一样，而更宽松的那一处就是实
@@ -177,9 +179,9 @@ division、最高能授予到哪一级），`BankPapers.vue` 拿它画 region �
 个下拉。自己算的话，一个 I1 和一个 ADM 会看到同一份选项，然后其中一个人保存时撞
 403。
 
-`lib/member.ts` 的 `MIN_ADMIN_RATING` 是 8（I1），它只决定页眉上画不画那个链接。
-rating 够但在任何 division 都没有 instructor 行的人，上游答 403，管理页显示「你
-不管理任何 division」—— 那需要查库，只有 can-api 判得了。
+`lib/member.ts` 的 `MIN_ADMIN_RATING` 是 can-ui 的 `RATING_INSTRUCTOR`（8，I1），它只决定导航上画不画那个链接。
+上游对清单答 403 时，题库页在原地址渲染 can-ui 的 `NoAccess`，HTTP 403；`lib/access.ts`
+只按 rating 挑说明文字，不决定放不放行。没登录的考场和题库页 302 到主站 `/signin?callbackUrl=`。
 
 ## 卷子的升级
 
