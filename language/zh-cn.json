@@ -2,6 +2,8 @@
   "frame": {
     "signIn": "登录",
     "signOut": "退出",
+    "signingOut": "正在退出…",
+    "signOutFailed": "退出失败，请重试。",
     "examCentre": "考试",
     "admin": "题库管理",
     "signInRequired": "请先登录",
@@ -11,7 +13,42 @@
     "error": "出了点问题，请稍后再试。",
     "skipToContent": "跳到主要内容",
     "openMenu": "打开菜单",
-    "closeMenu": "关闭菜单"
+    "openSidebar": "打开导航",
+    "closeSidebar": "关闭导航",
+    "close": "关闭",
+    "dismiss": "关闭提示",
+    "sidebar": "侧栏",
+    "openUserMenu": "打开账号菜单",
+    "siteNavigation": "本站导航",
+    "workspace": {
+      "label": "工作区"
+    },
+    "search": {
+      "label": "搜索页面",
+      "placeholder": "跳转到页面…",
+      "noResults": "没有匹配的页面"
+    },
+    "theme": {
+      "label": "外观",
+      "light": "浅色",
+      "dark": "深色",
+      "system": "跟随系统"
+    },
+    "language": {
+      "label": "选择语言"
+    },
+    "rail": {
+      "collapse": "收起侧栏",
+      "expand": "展开侧栏",
+      "me": "我的"
+    },
+    "noAccess": {
+      "title": "你没有访问这个页面的权限",
+      "rating": "需要等级 {required} 或以上。",
+      "permission": "需要「{name}」权限。",
+      "signedInAs": "当前登录：{name}（#{id}）。",
+      "reachable": "你可以使用的站点"
+    }
   },
   "home": {
     "title": "考试中心",
@@ -93,6 +130,10 @@
   },
   "admin": {
     "title": "题库管理",
+    "access": {
+      "permission": "所在分部的教员",
+      "hint": "题库按分部管理。需要编辑某个分部的题库，请联系该分部的负责人把你登记为教员。"
+    },
     "description": "卷子决定谁能拿到什么等级，所以只有教员及以上能进，而且各自只管得到自己分部的题库。",
     "forbidden": "你没有管理题库的权限。需要是教员及以上。",
     "noDivision": "你目前不管理任何分部，所以没有可以编辑的题库。",

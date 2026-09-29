@@ -1,3 +1,5 @@
+import { RATING_INSTRUCTOR } from "@jianyuelab-org/can-ui/sites";
+
 /**
  * 登录着的那个人。
  *
@@ -16,7 +18,7 @@ export interface Member {
 /**
  * 能进题库管理的最低 rating —— I1（教员）。
  *
- * 和 can-api 的 `store.RatingInstructor` 是同一个数字，抄在这里只为决定**要不
+ * 取自 can-ui 的 `RATING_INSTRUCTOR`（与 can-api `store.RatingInstructor` 同值），只为决定**要不
  * 要画出管理入口**。真正的门有两道，都在 can-api：路由上的 `WithSuper`，以及
  * 每个 handler 里按 division 判的 `exam.Authority`。把这个常数改成 0，只会让
  * 每个人都看到一个点进去就 403 的链接，改不动任何一行题目。
@@ -24,7 +26,7 @@ export interface Member {
  * 它曾经是 11（SUP）。放到 8 是这次改动本身：每个 division 的教员写自己
  * division 的题库，而不是全网两个人写所有卷子。
  */
-export const MIN_ADMIN_RATING = 8;
+export const MIN_ADMIN_RATING = RATING_INSTRUCTOR;
 
 /**
  * 这个人有没有可能进题库管理。

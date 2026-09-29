@@ -2,6 +2,8 @@
   "frame": {
     "signIn": "ログイン",
     "signOut": "ログアウト",
+    "signingOut": "ログアウト中…",
+    "signOutFailed": "ログアウトに失敗しました。もう一度お試しください。",
     "examCentre": "試験",
     "admin": "問題バンク",
     "signInRequired": "ログインしてください",
@@ -11,7 +13,42 @@
     "error": "問題が発生しました。しばらくしてからお試しください。",
     "skipToContent": "本文へスキップ",
     "openMenu": "メニューを開く",
-    "closeMenu": "メニューを閉じる"
+    "openSidebar": "ナビゲーションを開く",
+    "closeSidebar": "ナビゲーションを閉じる",
+    "close": "閉じる",
+    "dismiss": "通知を閉じる",
+    "sidebar": "サイドバー",
+    "openUserMenu": "アカウントメニューを開く",
+    "siteNavigation": "サイト内ナビゲーション",
+    "workspace": {
+      "label": "ワークスペース"
+    },
+    "search": {
+      "label": "ページを検索",
+      "placeholder": "ページへ移動…",
+      "noResults": "一致するページがありません"
+    },
+    "theme": {
+      "label": "外観",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システムに合わせる"
+    },
+    "language": {
+      "label": "言語を選択"
+    },
+    "rail": {
+      "collapse": "サイドバーを折りたたむ",
+      "expand": "サイドバーを展開",
+      "me": "マイ"
+    },
+    "noAccess": {
+      "title": "このページへのアクセス権がありません",
+      "rating": "レーティング {required} 以上が必要です。",
+      "permission": "「{name}」の権限が必要です。",
+      "signedInAs": "{name}（#{id}）としてログイン中。",
+      "reachable": "利用できるサイト"
+    }
   },
   "home": {
     "title": "試験センター",
@@ -93,6 +130,10 @@
   },
   "admin": {
     "title": "問題バンク",
+    "access": {
+      "permission": "担当分部の教官",
+      "hint": "問題バンクは分部ごとに管理されています。編集するには、その分部の責任者に教官として登録してもらってください。"
+    },
     "description": "試験はレーティングの付与を左右するため、教員以上のみが入れます。編集できるのは自分が担当するディビジョンの問題バンクだけです。",
     "forbidden": "問題バンクを管理する権限がありません。教員以上が必要です。",
     "noDivision": "どの division の教員でもないため、編集できる問題バンクがありません。",

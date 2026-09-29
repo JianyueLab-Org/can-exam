@@ -1,33 +1,20 @@
 ---
 /**
- * 考试中心的外壳。
+ * 考试中心的外壳：can-ui `CanFrame` 的 content 布局，经 `Frame.vue`。
  *
- * 没有 can-web 那套 AppShell 的侧栏：这个站点只有三个地方可去（考试、题库管
- * 理、主站），一个页眉装得下，而在手机上考试的人不需要一条占掉三分之一屏幕的
- * 导航。
- *
- * 会话在**服务端**读好传进页眉，而不是让岛屿挂载后自己去问：首屏就把「你是
- * 谁」画对，页眉不会先闪一下「登录」再变成名字。
+ * 会话在服务端读好传进去，首屏就画对「你是谁」。页脚由 CanFrame 画。
  */
 import "@/styles/globals.css";
 import ThemeScript from "@jianyuelab-org/can-ui/components/ThemeScript.astro";
-import SiteFooter from "@jianyuelab-org/can-ui/components/SiteFooter.vue";
-import type { SiteOrigins } from "@jianyuelab-org/can-ui";
-import Header from "@/components/Header.vue";
+import Frame from "@/components/Frame.vue";
 import { getLocale, getMessages } from "@/lib/i18n";
 import type { Member } from "@/lib/member";
-import { webOrigin } from "@/server/config";
+import { signInUrl } from "@/server/config";
 
 interface Props {
   title?: string;
   member: Member | null;
-  /**
-   * 给管理页用的宽版容器。
-   *
-   * 考生那几页是**读**的：一栏卷子、一张考卷，窄一点反而好读，5xl 正合适。管理
-   * 页是**扫**的 —— 一屏里要看清十几份卷子的状态，卡片排成一行三四个才有意义，
-   * 而 5xl 下四列每张只剩两百来像素，标题和按钮都挤不下。
-   */
+  /** 管理页用 max-w-7xl；考生页用 max-w-5xl。 */
   wide?: boolean;
 }
 
@@ -38,10 +25,6 @@ const messages = getMessages(locale, "frame");
 const pageTitle = title
   ? `${title} · Cerulean Aviation Network`
   : "考试中心 · Cerulean Aviation Network";
-
-// 开发环境下把页眉、页脚的「全网」链接指回本机的主站；自己的 key（exam）不
-// 填，站头链接自己的路径从不走 siteUrl。
-const origins: SiteOrigins = { web: webOrigin() };
 ---
 
 <!doctype html>
@@ -60,45 +43,29 @@ const origins: SiteOrigins = { web: webOrigin() };
   </head>
   <body
     class:list={[
-      "flex min-h-dvh flex-col bg-surface text-ink",
-      /* SiteHeader（can-ui）内部的 <nav> 固定 max-w-7xl，不认这个 prop —— 这
-         个类只用来在 globals.css 里，从站点这一侧把非 wide 页面的页眉宽度收回
-         max-w-5xl，和 <main> 对齐。 */
+      "bg-surface text-ink",
+      /* CanFrame 的顶栏固定 max-w-7xl，没有宽度 prop —— 这个类只用来在
+         globals.css 里，从站点这一侧把非 wide 页面的顶栏收回 max-w-5xl，
+         和正文对齐。 */
       !wide && "chrome-header-narrow",
     ]}
   >
-    <Header
+    <Frame
       messages={messages}
       locale={locale}
       member={member}
       pathname={Astro.url.pathname}
-      siteOrigin={webOrigin()}
-      origins={origins}
+      signInHref={signInUrl(Astro.url)}
       client:load
-    />
-    <main
-      id="main-content"
-      tabindex="-1"
-      class:list={[
-        "mx-auto w-full flex-1 px-4 py-8 sm:px-6 lg:px-8",
-        wide ? "max-w-7xl" : "max-w-5xl",
-      ]}
     >
-      <slot />
-    </main>
-    {
-      /* 这个站从前没有页脚。走出考试中心的唯一一条路是页眉上那个「主站」链接 ——
-         管制员中心、电子飞行包、文档、雷达一个都到不了。页脚来自 can-ui，所以这
-         里不存在第二份「网络上有哪些站」的清单，也不会和别的站漂开。
-
-         不带 hydration：整块都是链接，没有状态。 */
-    }
-    <SiteFooter
-      locale={locale}
-      current="exam"
-      rating={member?.rating}
-      signedIn={!!member}
-      origins={origins}
-    />
+      <div
+        class:list={[
+          "mx-auto w-full px-4 py-8 sm:px-6 lg:px-8",
+          wide ? "max-w-7xl" : "max-w-5xl",
+        ]}
+      >
+        <slot />
+      </div>
+    </Frame>
   </body>
 </html>
