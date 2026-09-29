@@ -51,7 +51,7 @@ spec:
             # 多存一份，省下的只是一次内网 HTTP。
             - name: CAN_API_ORIGIN
               value: https://api.ceruleanavi.net
-            # 主站。页眉那排导航和唯一的登录入口指向它 —— 这里是另一个源，写相
+            # 主站。唯一的登录入口指向它（外壳里的主站地址是构建时的 PUBLIC_CAN_WEB_ORIGIN） —— 这里是另一个源，写相
             # 对路径会打在 exam.ceruleanavi.net 上然后 404。
             - name: CAN_WEB_ORIGIN
               value: https://ceruleanavi.net

@@ -26,7 +26,7 @@ export const apiOrigin = () =>
   trim(process.env.CAN_API_ORIGIN || "https://api.ceruleanavi.net");
 
 /**
- * 主站。页眉导航和**唯一的登录入口**指向它。
+ * 主站。**唯一的登录入口**指向它；外壳里的主站地址来自 `originsFromEnv`。
  *
  * 分成两个地址而不是一个，和 can-dev、can-radar 同一个理由：登录页是一个要渲
  * 染给人看、带着主站样式的**页面**，它没有跟着数据层搬进 can-api。本地开发时

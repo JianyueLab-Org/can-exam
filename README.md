@@ -71,7 +71,7 @@ bun run dev          # http://localhost:4325（4324 是 can-efb 的，它先占�
 门禁：
 
 ```bash
-bun run lint         # prettier --check + astro check + vue-tsc
+bun run lint         # prettier --check + astro check + vue-tsc + bun test
 bun run build
 bun run check:pages  # can-ui ⌘K 页面表里 exam 的每一条都有路由
 ```

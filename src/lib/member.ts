@@ -32,8 +32,8 @@ export const MIN_ADMIN_RATING = RATING_INSTRUCTOR;
  * 这个人有没有可能进题库管理。
  *
  * 「有没有可能」是准确的措辞：rating 够了不代表真的能管到什么 —— 一个教员如果
- * 在任何 division 里都没有 active 的 instructor 行，上游会答 403，管理页显示
- * 一句「你不管理任何 division」。那个判断需要查库，只有 can-api 做得了。
+ * 在任何 division 里都没有 active 的 instructor 行，上游会答 403，题库页在原地址渲染
+ * `NoAccess`（HTTP 403）。那个判断需要查库，只有 can-api 做得了。
  */
 export function canManageBank(member: Member | null): boolean {
   return !!member && member.rating >= MIN_ADMIN_RATING;
