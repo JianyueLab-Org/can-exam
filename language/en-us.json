@@ -2,6 +2,8 @@
   "frame": {
     "signIn": "Sign in",
     "signOut": "Sign out",
+    "signingOut": "Signing out…",
+    "signOutFailed": "Sign-out failed. Try again.",
     "examCentre": "Exams",
     "admin": "Question bank",
     "signInRequired": "Sign in to continue",
@@ -11,7 +13,42 @@
     "error": "Something went wrong. Try again shortly.",
     "skipToContent": "Skip to main content",
     "openMenu": "Open main menu",
-    "closeMenu": "Close menu"
+    "openSidebar": "Open navigation",
+    "closeSidebar": "Close navigation",
+    "close": "Close",
+    "dismiss": "Dismiss",
+    "sidebar": "Sidebar",
+    "openUserMenu": "Open account menu",
+    "siteNavigation": "Site navigation",
+    "workspace": {
+      "label": "Workspace"
+    },
+    "search": {
+      "label": "Search pages",
+      "placeholder": "Jump to a page…",
+      "noResults": "No matching page"
+    },
+    "theme": {
+      "label": "Appearance",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "Follow system"
+    },
+    "language": {
+      "label": "Select language"
+    },
+    "rail": {
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "me": "Me"
+    },
+    "noAccess": {
+      "title": "You do not have access to this page",
+      "rating": "It needs rating {required} or above.",
+      "permission": "It needs the {name} permission.",
+      "signedInAs": "Signed in as {name} (#{id}).",
+      "reachable": "Sites you can use"
+    }
   },
   "home": {
     "title": "Exam Centre",
@@ -93,6 +130,10 @@
   },
   "admin": {
     "title": "Question bank",
+    "access": {
+      "permission": "division instructor",
+      "hint": "Question banks are managed per division. To edit one, ask that division's lead to register you as an instructor."
+    },
     "description": "Papers decide who gets which rating, so this is instructors and above — each scoped to the divisions they instruct in.",
     "forbidden": "You may not manage the question bank. It is instructors and above.",
     "noDivision": "You do not instruct in any division, so there is no bank for you to edit.",

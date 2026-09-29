@@ -1,0 +1,31 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 门是本地那三条命令：lint、build、check:pages。
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      # GITHUB_TOKEN 给 can-ui 用：GitHub 的 npm registry 即使是公开包也要令牌，
+      # .npmrc 在安装时从环境里读它。
+      - run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # format:check + astro check + vue-tsc + bun test。
+      - run: bun run lint
+
+      - run: bun run build
+
+      # can-ui 的 ⌘K 页面表里 exam 的每一条都要在 src/pages 里有路由。
+      - run: bun run check:pages

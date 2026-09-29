@@ -53,14 +53,15 @@ bun run dev          # http://localhost:4325（4324 是 can-efb 的，它先占�
 ```
 
 `.env.example` 复制成 `.env`。本地开发一般只需要改一处：如果主站也在本地跑，把
-`CAN_WEB_ORIGIN` 指到 `http://localhost:4321`，否则页眉上的「登录」会把你送到线
-上去。
+`CAN_WEB_ORIGIN` 和 `PUBLIC_CAN_WEB_ORIGIN` 都指到 `http://localhost:4321`，否则
+「登录」和全网菜单会把你送到线上去。
 
-| 变量             | 作用                                                      |
-| ---------------- | --------------------------------------------------------- |
-| `CAN_API_ORIGIN` | 数据层。题库、发卷、判卷、会话都问它                      |
-| `CAN_WEB_ORIGIN` | 主站。页眉导航和唯一的登录入口                            |
-| `PUBLIC_ORIGIN`  | 本站对外地址，只用来校验写操作的 Origin。**部署里必须设** |
+| 变量                    | 作用                                                              |
+| ----------------------- | ----------------------------------------------------------------- |
+| `CAN_API_ORIGIN`        | 数据层。题库、发卷、判卷、会话都问它                              |
+| `CAN_WEB_ORIGIN`        | 主站。唯一的登录入口（`signInUrl()`）                             |
+| `PUBLIC_ORIGIN`         | 本站对外地址，只用来校验写操作的 Origin。**部署里必须设**         |
+| `PUBLIC_CAN_WEB_ORIGIN` | 外壳里主站的地址（can-ui `originsFromEnv`），构建时内联。线上不设 |
 
 这个站点**没有**为图片新增任何环境变量。R2 的那五项（`R2_ENDPOINT` / `R2_BUCKET`
 / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_PUBLIC_BASE`）全在 can-api
@@ -70,8 +71,9 @@ bun run dev          # http://localhost:4325（4324 是 can-efb 的，它先占�
 门禁：
 
 ```bash
-bun run lint         # prettier --check + astro check + vue-tsc
+bun run lint         # prettier --check + astro check + vue-tsc + bun test
 bun run build
+bun run check:pages  # can-ui ⌘K 页面表里 exam 的每一条都有路由
 ```
 
 ## 页面

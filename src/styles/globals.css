@@ -14,17 +14,16 @@
 @import "@jianyuelab-org/can-ui/styles";
 
 /* ---------------------------------------------------------------------------
-   页眉宽度跟着 BaseLayout 的 `wide` 走。
+   顶栏宽度跟着 BaseLayout 的 `wide` 走。
 
-   can-ui 的 SiteHeader 里那条 <nav> 自己写死 max-w-7xl，没有 prop 能改；考
-   生那几页正文是 max-w-5xl（窄一点更好读），非 wide 页面因此页眉比正文宽出
-   一截，两边对不齐。SiteHeader 不认站点的 `wide`，只能从这一侧盖：BaseLayout
-   在非 wide 页面上给 <body> 挂 `chrome-header-narrow`，这条规则据此把页眉的
-   <nav> 收回 64rem（= max-w-5xl，和 <main> 一致）。
+   can-ui 的 CanFrame（content 布局）里，顶栏内层 <div> 自己写死 max-w-7xl，没
+   有 prop 能改；考生那几页正文是 max-w-5xl（窄一点更好读），非 wide 页面因此
+   顶栏比正文宽出一截，两边对不齐。BaseLayout 在非 wide 页面上给 <body> 挂
+   `chrome-header-narrow`，这条规则据此把顶栏内层收回 64rem（= max-w-5xl，和正
+   文一致）。
 
    这条规则故意不写进任何 @layer：can-ui 的 max-w-7xl 来自 Tailwind 的
-   utilities 层，未分层的规则在层叠层里永远赢过任何 @layer，不必再去猜一个
-   比 .max-w-7xl 更高的选择器优先级。 */
-.chrome-header-narrow header nav[aria-label="Global"] {
+   utilities 层，未分层的规则在层叠层里永远赢过任何 @layer。 */
+.chrome-header-narrow header > div.max-w-7xl {
   max-width: 64rem;
 }

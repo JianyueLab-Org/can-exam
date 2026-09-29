@@ -5,7 +5,7 @@ import { crossOrigin, forbidden } from "@/server/guard";
 import { LIMITS, clientIp, enforce } from "@/server/rateLimit";
 
 /**
- * 登出。
+ * 登出：`POST /api/v1/auth/signout`，can-ui `AccountMenu` 调的那一条。
  *
  * 登录在主站，登出为什么在这里？因为让人为了退出跳去主站，多数人会直接关掉标
  * 签页，而那不叫退出。can-radar 出于同样的理由带了这一条。

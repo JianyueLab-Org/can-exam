@@ -26,7 +26,7 @@ export const apiOrigin = () =>
   trim(process.env.CAN_API_ORIGIN || "https://api.ceruleanavi.net");
 
 /**
- * 主站。页眉导航和**唯一的登录入口**指向它。
+ * 主站。**唯一的登录入口**指向它；外壳里的主站地址来自 `originsFromEnv`。
  *
  * 分成两个地址而不是一个，和 can-dev、can-radar 同一个理由：登录页是一个要渲
  * 染给人看、带着主站样式的**页面**，它没有跟着数据层搬进 can-api。本地开发时
@@ -51,3 +51,14 @@ export const webOrigin = () =>
  */
 export const publicOrigin = () =>
   trim(process.env.PUBLIC_ORIGIN || "http://localhost:4325");
+
+/**
+ * can-web 的登录页，带上回到这一页的完整地址。
+ *
+ * 用 `publicOrigin()` 而不是 `returnTo.origin`：反代后面请求的 origin 是
+ * `http://`，配不上 can-web 回跳白名单里的 `https://`。片段不带。
+ */
+export function signInUrl(returnTo: URL): string {
+  const target = `${publicOrigin()}${returnTo.pathname}${returnTo.search}`;
+  return `${webOrigin()}/signin?callbackUrl=${encodeURIComponent(target)}`;
+}
