@@ -12,6 +12,7 @@ Tailwind v4。**没有自己的登录，没有数据库，题库和答案一行�
 bun run dev      # :4325（4321 can-web，4322 can-dev，4323 can-radar，4324 can-efb）
 bun run lint     # format:check + astro check + vue-tsc + bun test
 bun run build && bun run start
+bun run check:pages  # ⌘K 页面表里 exam 的每一条都有路由
 ```
 
 门禁是 `bun run lint`、`bun run build`、`bun run check:pages`，CI 同样三条（`check.yml`）。
