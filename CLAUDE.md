@@ -149,6 +149,7 @@ layout 里记着题号，题上的图删掉了那张卷子就成了半张。孤�
 | `/api/v1/admin/**`                                 | `/api/v1/super/exam/**`（WithSuper）        |
 | `POST /api/v1/admin/images`                        | `POST /api/v1/super/exam/images`            |
 | `GET /api/v1/session`、`POST /api/v1/auth/signout` | `…/auth/session`、`…/auth/signout`          |
+| `/api/v1/notifications/**`（通知铃）               | `/api/v1/notifications/**`                  |
 
 **这一侧一次授权判断都不做。** 不看 rating、不看会话内容，只把 cookie 转过去、
 把状态码抄回来。两处各判一次的话，两处会慢慢长得不一样，而更宽松的那一处就是实

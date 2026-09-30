@@ -45,6 +45,9 @@ export const LIMITS = {
   /** 题库管理。按 IP 计，很松：批量录四十道题是一个正常的下午。真正的授权在
    *  can-api 的 WithSup 上，这里只是一层量的上限。 */
   admin: { limit: 900, windowMs: HOUR },
+  /** 通知铃。按 IP 计。一个标签页每分钟问一次未读数，打开面板再读一页、标几条。
+   *  一个可见标签页每小时约 60 次；3600 够一个出口 IP 后约 30 个可见标签页，留一倍余量。 */
+  notifications: { limit: 3600, windowMs: HOUR },
 } as const satisfies Record<string, RateLimitRule>;
 
 type Bucket = { count: number; resetAt: number };
