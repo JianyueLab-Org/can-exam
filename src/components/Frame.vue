@@ -82,6 +82,7 @@ onBeforeUnmount(() =>
     :pathname="navPathname"
     :nav="nav"
     :user="user"
+    notifications
     :sign-in-href="signInHref"
     after-sign-out="reload"
     :messages="messages"
