@@ -134,7 +134,7 @@
       "permission": "担当分部の教官",
       "hint": "問題バンクは分部ごとに管理されています。編集するには、その分部の責任者に教官として登録してもらってください。"
     },
-    "description": "試験はレーティングの付与を左右するため、教員以上のみが入れます。編集できるのは自分が担当するディビジョンの問題バンクだけです。",
+    "description": "試験はレーティングの付与を左右するため、教員以上のみが入れます。編集できるのは自分が担当するディビジョンの問題バンクだけです。昇格は各 division の active director が設定します。",
     "forbidden": "問題バンクを管理する権限がありません。教員以上が必要です。",
     "noDivision": "どの division の教員でもないため、編集できる問題バンクがありません。",
     "scopedTo": "編集できる範囲：{regions}",
@@ -170,7 +170,7 @@
       "slug": "アドレス",
       "slugHelp": "小文字・数字・ハイフンのみ。受験ページは /sit/<アドレス> です。",
       "division": "ディビジョン",
-      "divisionHelp": "この試験を編集できる人を決めます：そのディビジョンの教員と SUP/ADM。",
+      "divisionHelp": "この試験を編集できる人を決めます：そのディビジョンの教員・active director・SUP/ADM。",
       "name": "名称",
       "description": "説明",
       "scope": "区分",
@@ -180,10 +180,10 @@
       "timeLimit": "制限時間（分）",
       "timeLimitHelp": "0 で制限なし。",
       "eligibleRatings": "受験できるレーティング",
-      "eligibleHelp": "空欄なら誰でも受験できます。",
+      "eligibleHelp": "昇格なしの試験は空欄なら誰でも受験できます。昇格試験では対象レーティングを指定してください。",
       "promoteTo": "合格時の昇格先",
       "promoteNone": "昇格しない",
-      "promoteHelp": "試験で SUP・ADM を付与することはできません。",
+      "promoteHelp": "昇格を設定できるのは、その division の active director だけです。権限がなければ昇格なしを選んでください。",
       "publish": "公開する（メンバーに表示）",
       "save": "保存",
       "saving": "保存中…",
@@ -273,6 +273,10 @@
     "errors": {
       "wrong_region": "自分が担当する division にのみ試験を作成できます。",
       "grant_too_high": "試験で自分と同等以上のレーティングは付与できません。",
+      "promotion_forbidden": "昇格を設定できるのは、その division の active director だけです。",
+      "eligible_rating_required": "昇格する試験では、少なくとも1つの受験可能なレーティングを選んでください。",
+      "eligible_rating_unknown": "昇格対象のレーティングに不明な値があります。",
+      "eligible_rating_too_high": "受験できるレーティングは、昇格先より低くする必要があります。",
       "forbidden": "どの division の教員でもありません。",
       "gone": "その問題は存在しません。他の人が削除した可能性があります。"
     }

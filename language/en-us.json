@@ -134,7 +134,7 @@
       "permission": "division instructor",
       "hint": "Question banks are managed per division. To edit one, ask that division's lead to register you as an instructor."
     },
-    "description": "Papers decide who gets which rating, so this is instructors and above — each scoped to the divisions they instruct in.",
+    "description": "Papers decide who gets which rating, so this is instructors and above — each scoped to the divisions they instruct in. Active division directors configure promotion.",
     "forbidden": "You may not manage the question bank. It is instructors and above.",
     "noDivision": "You do not instruct in any division, so there is no bank for you to edit.",
     "scopedTo": "You may edit: {regions}",
@@ -170,7 +170,7 @@
       "slug": "Address",
       "slugHelp": "Lowercase letters, digits and dashes. Candidates sit it at /sit/<address>.",
       "division": "Division",
-      "divisionHelp": "Decides who may edit this paper: that division's instructors, plus SUP/ADM.",
+      "divisionHelp": "Decides who may edit this paper: that division's instructors and active directors, plus SUP/ADM.",
       "name": "Name",
       "description": "Description",
       "scope": "Track",
@@ -180,10 +180,10 @@
       "timeLimit": "Time limit (minutes)",
       "timeLimitHelp": "0 means no limit.",
       "eligibleRatings": "Ratings that may sit it",
-      "eligibleHelp": "Leave empty to let any member sit it.",
+      "eligibleHelp": "Leave empty for a non-promotion paper to let any member sit it. Promotion papers must list eligible ratings.",
       "promoteTo": "A pass promotes to",
       "promoteNone": "No promotion",
-      "promoteHelp": "An exam may not grant SUP or ADM.",
+      "promoteHelp": "Only an active director for this division may configure promotion. Leave it at no promotion when you do not have that authority.",
       "publish": "Published (visible to members)",
       "save": "Save",
       "saving": "Saving…",
@@ -273,6 +273,10 @@
     "errors": {
       "wrong_region": "You may only file papers under a division you instruct in.",
       "grant_too_high": "An exam may not grant your own rating or above.",
+      "promotion_forbidden": "Only an active director for this division may configure promotion.",
+      "eligible_rating_required": "Choose at least one eligible rating for a promotion exam.",
+      "eligible_rating_unknown": "The promotion eligibility list contains an unknown rating.",
+      "eligible_rating_too_high": "Every eligible rating must be below the promotion target.",
       "forbidden": "You do not instruct in any division.",
       "gone": "That question is gone — somebody may have deleted it."
     }

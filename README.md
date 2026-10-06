@@ -12,7 +12,8 @@ Astro SSR + Vue 岛屿 + Tailwind v4，和 can-dev、can-radar 同一套。
 
 **做：** 列出你能考的卷子、把抽好的卷子画出来、收答案、显示成绩；**每个 division
 的教员**还能在 `/admin` 里管理自己 division 的题库（增删改题、设抽题数、及格线、
-等级门槛、通过后的升级）。SUP/ADM 管全部，包括全网级的入网测试。
+等级门槛）。通过后的升级由该 division 的 active director 配置；SUP/ADM 管全部，
+包括全网级的入网测试。
 
 一份卷子归哪个 division，就由那个 division 的教员来写 —— 别的 division 的题库连
 看都看不到，因为管理端的题目是带答案的。谁能改什么由 can-api 说了算，这边只负责
