@@ -177,9 +177,10 @@ layout 里记着题号，题上的图删掉了那张卷子就成了半张。孤�
 是同一个权限；给别的 division 一个只读视图，只是慢一点地泄题。
 
 **下拉里的选项不是这边算的。** 卷子清单的响应里带着 `authority`（能管哪些
-division、最高能授予到哪一级），`BankPapers.vue` 拿它画 region 和 promoteTo 两
-个下拉。自己算的话，一个 I1 和一个 ADM 会看到同一份选项，然后其中一个人保存时撞
-403。
+division、哪些 division 能配置提升、最高能授予到哪一级），`BankPapers.vue` 拿它画
+region 和 promoteTo 两个下拉。提升只对 `promotionRegions` 中的 division 开放；缺少
+这个字段的旧响应按空数组处理。自己算的话，一个 I1 和一个 ADM 会看到同一份选项，
+然后其中一个人保存时撞 403。
 
 `lib/member.ts` 的 `MIN_ADMIN_RATING` 是 can-ui 的 `RATING_INSTRUCTOR`（8，I1），它只决定导航上画不画那个链接。
 上游对清单答 403 时，题库页在原地址渲染 can-ui 的 `NoAccess`，HTTP 403；`lib/access.ts`
@@ -189,7 +190,8 @@ division、最高能授予到哪一级），`BankPapers.vue` 拿它画 region �
 
 一份卷子可以设 `promoteTo`：通过之后把成员的 rating 提到那个值。提升受卷子的等级
 门槛约束（上游的提升语句带 `AND rating IN (…)`），所以一个后来被教员提上去的人，
-不会被他上个月考的卷子按回观察员。
+不会被他上个月考的卷子按回观察员。设置提升时必须列出至少一个已知、低于提升目标的
+来源等级；不提升的卷子仍然可以留空，表示任何等级都能考。
 
 ## 上线顺序
 

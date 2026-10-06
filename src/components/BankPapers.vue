@@ -13,14 +13,15 @@
  * - **Division** 决定谁能改这份卷子。它不是分类标签：改它等于把这份卷子交给
  *   另一批人。「全网」（0）只有 SUP/ADM 能用 —— 入网测试就在那儿，某个
  *   division 的教员不该能改让人进网络的那份考卷。
- * - **通过后提升到的等级**有一个跟着人走的上限：你写的卷子不能授予你自己这一
- *   级或更高（教员如此，SUP/ADM 也一样 —— 谁都不能授予 SUP/ADM）。否则改一份
- *   授予 I3 的卷子的题目、把它改简单、自己去考，就是一条自助升级的路。
+ * - **通过后提升到的等级**同时受两条上游权限约束：你只能在
+ *   `authority.promotionRegions` 里的 division 配置提升，且不能授予你自己这一
+ *   级或更高（教员如此，SUP/ADM 也一样 —— 谁都不能授予 SUP/ADM）。换到没有
+ *   提升权限的 division 时，表单会清掉旧的 promoteTo。
  *
  * 这两个下拉里的选项**都不是这里算出来的**，是上游随卷子清单一起给的
- * （`authority`）：能管哪些 division 要查 division 表，上限取决于调用者自己的
- * rating。两边各算一遍的话，两边会慢慢长得不一样，而更宽松的那一份就是实际生
- * 效的那一份。这里只负责画，不负责判。
+ * （`authority`）：能管哪些 division、哪些 division 能配置提升、上限都由上游算好。
+ * 两边各算一遍的话，两边会慢慢长得不一样，而更宽松的那一份就是实际生效的那一
+ * 份。这里只负责画，不负责判。
  *
  * 题库里题目不够抽题数时会显示一行警告。那不是错误 —— 上游会自动夹到题库大小
  * ——但一份说着「考 20 题」实际只考 8 题的卷子，作者应该知道。
@@ -40,7 +41,13 @@ import {
   Select,
   Toggle,
 } from "@jianyuelab-org/can-ui";
-import { EMPTY_PAPER, type AdminPaper, type BankAuthority } from "@/lib/admin";
+import {
+  canConfigurePromotion,
+  EMPTY_PAPER,
+  paperProblem,
+  type AdminPaper,
+  type BankAuthority,
+} from "@/lib/admin";
 import {
   api,
   allRatings,
@@ -71,7 +78,13 @@ const t = createTranslator(props.messages);
 const papers = ref<AdminPaper[]>(props.papers);
 /** 没有 authority 时给一个什么都不许的：默认必须是「不能」，不是「全能」。 */
 const authority = computed<BankAuthority>(
-  () => props.authority ?? { global: false, regions: [], maxGrant: -2 },
+  () =>
+    props.authority ?? {
+      global: false,
+      regions: [],
+      maxGrant: -2,
+      promotionRegions: [],
+    },
 );
 const error = ref<string | null>(null);
 const saving = ref(false);
@@ -143,11 +156,28 @@ const promoteOptions = computed(() => [
   { value: "", label: t("admin.paper.promoteNone") },
   ...allRatings()
     .filter((rating) => rating.id <= authority.value.maxGrant)
-    .map((rating) => ({ value: String(rating.id), label: rating.name })),
+    .map((rating) => ({
+      value: String(rating.id),
+      label: rating.name,
+      disabled: !canConfigurePromotion(authority.value, draft.value.region),
+    })),
 ]);
 
 function setPromoteTo(value: string | number) {
   draft.value.promoteTo = value === "" ? null : Number(value);
+}
+
+function setRegion(value: string | number) {
+  const region = Number(value);
+  draft.value.region = region;
+  // A region change must never carry a promotion setting into a division where
+  // this authority cannot configure it.
+  if (
+    draft.value.promoteTo !== null &&
+    !canConfigurePromotion(authority.value, region)
+  ) {
+    draft.value.promoteTo = null;
+  }
 }
 
 function open(paper?: AdminPaper) {
@@ -160,7 +190,7 @@ function open(paper?: AdminPaper) {
 
 /**
  * 等级门槛在界面上是一串复选框，在线上是一个逗号分隔的列。这里只管前者。
- * 空 = 谁都能考，那是上游的语义，不是「忘了填」。
+ * 不提升的卷子留空表示谁都能考；晋级卷必须明确列出来源等级。
  */
 function toggleRating(id: number) {
   const current = draft.value.eligibleRatings ?? [];
@@ -185,12 +215,22 @@ function describe(err: unknown): string {
   if (code && ["wrong_region", "grant_too_high", "forbidden"].includes(code)) {
     return t(`admin.errors.${code}`);
   }
+  if (code === "promotion_region") {
+    return t("admin.errors.promotion_forbidden");
+  }
   return message || t("frame.error");
 }
 
 async function save() {
-  saving.value = true;
   error.value = null;
+
+  const problem = paperProblem(draft.value, authority.value);
+  if (problem) {
+    error.value = t(`admin.errors.${problem}`);
+    return;
+  }
+
+  saving.value = true;
 
   const body = {
     slug: draft.value.slug.trim(),
@@ -484,9 +524,7 @@ async function confirmDelete() {
               :label="t('admin.paper.division')"
               :options="regionOptions"
               :hint="t('admin.paper.divisionHelp')"
-              @update:model-value="
-                (value: string | number) => (draft.region = Number(value))
-              "
+              @update:model-value="setRegion"
             />
             <Select
               :model-value="
@@ -533,7 +571,12 @@ async function confirmDelete() {
                 v-for="rating in allRatings()"
                 :key="rating.id"
                 :class="[
-                  'flex cursor-pointer items-center gap-1 rounded-control border px-2.5 py-1 text-xs transition-colors',
+                  'flex items-center gap-1 rounded-control border px-2.5 py-1 text-xs transition-colors',
+                  draft.promoteTo !== null &&
+                  rating.id >= draft.promoteTo &&
+                  !(draft.eligibleRatings ?? []).includes(rating.id)
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'cursor-pointer',
                   (draft.eligibleRatings ?? []).includes(rating.id)
                     ? 'border-can bg-info-bg font-medium text-ink'
                     : 'border-subtle text-muted hover:border-strong hover:bg-surface-sunken hover:text-ink',
@@ -543,6 +586,11 @@ async function confirmDelete() {
                   type="checkbox"
                   class="sr-only"
                   :checked="(draft.eligibleRatings ?? []).includes(rating.id)"
+                  :disabled="
+                    draft.promoteTo !== null &&
+                    rating.id >= draft.promoteTo &&
+                    !(draft.eligibleRatings ?? []).includes(rating.id)
+                  "
                   @change="toggleRating(rating.id)"
                 />
                 <Icon

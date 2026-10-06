@@ -10,7 +10,7 @@
  * 不共享任何响应结构体。
  */
 
-import type { ExamScope } from "./exams";
+import { allRatings, type ExamScope } from "./exams";
 
 /** 管理端看到的一份卷子。比考生那份多了草稿、抽题数、等级门槛这些设置。 */
 export interface AdminPaper {
@@ -56,6 +56,56 @@ export interface BankAuthority {
   regions: number[];
   /** 卷子最高能授予到哪一级。-2 表示一级都不能授予。 */
   maxGrant: number;
+  /**
+   * 能配置通过后提升的 division。由 active director 行决定；SUP/ADM 拿到全部
+   * division（包括 0）。旧版上游没有这个字段时必须按空数组处理。
+   */
+  promotionRegions?: number[];
+}
+
+/** Fields used by the paper editor's local promotion checks. */
+export interface PaperDraftSettings {
+  region: number;
+  promoteTo: number | null;
+  eligibleRatings: number[] | null;
+}
+
+export type PaperProblem =
+  | "promotion_forbidden"
+  | "eligible_rating_required"
+  | "eligible_rating_unknown"
+  | "eligible_rating_too_high";
+
+/** Promotion is a director-region permission, not a rating or global shortcut. */
+export function canConfigurePromotion(
+  authority: Pick<BankAuthority, "promotionRegions">,
+  region: number,
+): boolean {
+  return authority.promotionRegions?.includes(region) ?? false;
+}
+
+/**
+ * Check promotion-specific paper settings before sending them upstream.
+ * Empty eligibleRatings keeps its existing meaning for non-promoting papers:
+ * every rating may sit them. Promotion papers must name their source ratings.
+ */
+export function paperProblem(
+  draft: PaperDraftSettings,
+  authority: Pick<BankAuthority, "promotionRegions">,
+): PaperProblem | null {
+  if (draft.promoteTo === null) return null;
+  if (!canConfigurePromotion(authority, draft.region)) {
+    return "promotion_forbidden";
+  }
+
+  if (!draft.eligibleRatings?.length) return "eligible_rating_required";
+
+  const known = new Set(allRatings().map((rating) => rating.id));
+  for (const rating of draft.eligibleRatings ?? []) {
+    if (!known.has(rating)) return "eligible_rating_unknown";
+    if (rating >= draft.promoteTo) return "eligible_rating_too_high";
+  }
+  return null;
 }
 
 /** 一道题，**带答案**。 */

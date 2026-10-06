@@ -134,7 +134,7 @@
       "permission": "所在分部的教员",
       "hint": "题库按分部管理。需要编辑某个分部的题库，请联系该分部的负责人把你登记为教员。"
     },
-    "description": "卷子决定谁能拿到什么等级，所以只有教员及以上能进，而且各自只管得到自己分部的题库。",
+    "description": "卷子决定谁能拿到什么等级，所以只有教员及以上能进，而且各自只管得到自己分部的题库。晋级由各分部的现任主管配置。",
     "forbidden": "你没有管理题库的权限。需要是教员及以上。",
     "noDivision": "你目前不管理任何分部，所以没有可以编辑的题库。",
     "scopedTo": "你能编辑的是：{regions}",
@@ -170,7 +170,7 @@
       "slug": "地址",
       "slugHelp": "只能用小写字母、数字和连字符，作答地址是 /sit/<地址>。",
       "division": "分部",
-      "divisionHelp": "决定谁能改这份卷子：只有这个分部的教员（和 SUP/ADM）能改。",
+      "divisionHelp": "决定谁能改这份卷子：该分部的教员、现任分部主管和 SUP/ADM 都能改。",
       "name": "名称",
       "description": "说明",
       "scope": "分栏",
@@ -180,10 +180,10 @@
       "timeLimit": "限时（分钟）",
       "timeLimitHelp": "填 0 表示不限时。",
       "eligibleRatings": "允许作答的等级",
-      "eligibleHelp": "留空表示任何成员都能考。",
+      "eligibleHelp": "不晋级的卷子留空表示任何成员都能考；晋级考试必须列出允许的来源等级。",
       "promoteTo": "通过后提升为",
       "promoteNone": "不提升等级",
-      "promoteHelp": "考试不能授予 SUP 或 ADM。",
+      "promoteHelp": "只有该分部的现任主管能配置晋级。没有这项权限时请保持为不晋级。",
       "publish": "发布（成员可见）",
       "save": "保存",
       "saving": "保存中…",
@@ -273,6 +273,10 @@
     "errors": {
       "wrong_region": "你只能把卷子放在自己管理的分部下。",
       "grant_too_high": "卷子不能授予你自己的等级或更高。",
+      "promotion_forbidden": "只有该分部的现任主管能配置晋级。",
+      "eligible_rating_required": "设置晋级的考试至少要选择一个允许作答的等级。",
+      "eligible_rating_unknown": "晋级门槛里有未知的等级。",
+      "eligible_rating_too_high": "所有允许作答的等级都必须低于晋级目标。",
       "forbidden": "你不管理任何分部。",
       "gone": "这道题已经不在了，可能被别人删了。"
     }
