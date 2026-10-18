@@ -23,12 +23,17 @@ describe("training hrefs", () => {
 });
 
 describe("buildTrainingDivisions", () => {
-  test("four divisions, JPN published with every material", () => {
+  test("five divisions, JPN published with every material", () => {
     const divisions = buildTrainingDivisions(ids);
-    expect(divisions.map((d) => d.region)).toEqual([1, 2, 3, 4]);
+    expect(divisions.map((d) => d.region)).toEqual([1, 2, 3, 4, 5]);
     const jpn = divisions.find((d) => d.region === 3)!;
     expect(jpn.href).toBe("/training/jpn");
     expect(jpn.materialCount).toBe(ids.length - 1); // overview excluded
+  });
+
+  test("ROC has no curriculum and stays unpublished", () => {
+    const roc = buildTrainingDivisions(ids).find((d) => d.region === 5)!;
+    expect(roc).toEqual({ region: 5 });
   });
 });
 
