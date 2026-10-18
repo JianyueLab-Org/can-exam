@@ -293,14 +293,14 @@
     }
   },
   "training": {
-    "title": "訓練教材",
-    "description": "各支部が作成した管制訓練教材です。教材は規範的な文書ではありません。支部の規則やSOPと矛盾する場合は、規則とSOPが優先します。",
+    "title": "訓練資料",
+    "description": "各支部が作成した管制訓練資料です。教材は規範的な文書ではありません。支部の規則やSOPと矛盾する場合は、規則とSOPが優先します。",
     "publishedCount": "{total}支部中、{count}支部が教材を公開",
     "materialCount": "全{count}編",
     "open": "教材を見る",
     "pending": "未公開",
-    "pendingDescription": "この支部はまだ訓練教材を公開していません。",
-    "back": "訓練教材へ戻る",
+    "pendingDescription": "この支部はまだ訓練資料を公開していません。",
+    "back": "訓練資料へ戻る",
     "backToCurriculum": "教材一覧へ戻る",
     "onThisPage": "このページの目次",
     "overview": "教材の全体像",

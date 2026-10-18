@@ -293,14 +293,14 @@
     }
   },
   "training": {
-    "title": "Training Materials",
+    "title": "Training materials",
     "description": "Training material written by each division. The materials are non-normative — where they conflict with a division's rules or SOPs, the rules and SOPs win.",
     "publishedCount": "{count} of {total} divisions have published materials",
     "materialCount": "{count} materials",
     "open": "Open the materials",
     "pending": "Not published",
     "pendingDescription": "This division has not published training materials yet.",
-    "back": "Back to Training Materials",
+    "back": "Back to training materials",
     "backToCurriculum": "Back to the syllabus",
     "onThisPage": "On this page",
     "overview": "Series overview",

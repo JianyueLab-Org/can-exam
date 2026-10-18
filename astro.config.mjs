@@ -63,7 +63,7 @@ export default defineConfig({
   adapter: node({ mode: "standalone" }),
   integrations: [vue(), mdx()],
 
-  // 训练教材（MDX）里的表格外面包一层 `.table-scroll`，见上面的插件。
+  // 培训资料（MDX）里的表格外面包一层 `.table-scroll`，见上面的插件。
   // `markdown.rehypePlugins` 是已弃用的写法，管线改由 `markdown.processor` 接一个
   // unified() 实例。@astrojs/markdown-remark 钉成 astro 自己解析到的那一版，两边
   // 才是同一个模块：astro 按实例而不是按形状认自己的 processor，两份拷贝意味着插件
