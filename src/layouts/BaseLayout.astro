@@ -1,12 +1,14 @@
 ---
 /**
- * 考试中心的外壳：can-ui `CanFrame` 的 content 布局，经 `Frame.vue`。
+ * 考试中心的外壳：can-ui `CanFrame`，经 `Frame.vue`。考生页 content 布局，`/admin` tool 布局。
  *
  * 会话在服务端读好传进去，首屏就画对「你是谁」。页脚由 CanFrame 画。
  */
 import "@/styles/globals.css";
 import ThemeScript from "@jianyuelab-org/can-ui/components/ThemeScript.astro";
 import Frame from "@/components/Frame.vue";
+import { pageTitle } from "@/lib/pageTitle";
+import { signOutTarget } from "@/lib/signOutTarget";
 import { getLocale, getMessages } from "@/lib/i18n";
 import type { Member } from "@/lib/member";
 import { signInUrl } from "@/server/config";
@@ -22,9 +24,9 @@ const { title, member, wide = false } = Astro.props;
 
 const locale = getLocale(Astro.cookies);
 const messages = getMessages(locale, "frame");
-const pageTitle = title
-  ? `${title} · Cerulean Aviation Network`
-  : "考试中心 · Cerulean Aviation Network";
+const pageTitleText = pageTitle(title, locale);
+const path = Astro.url.pathname;
+const isAdmin = path === "/admin" || path.startsWith("/admin/");
 ---
 
 <!doctype html>
@@ -35,8 +37,17 @@ const pageTitle = title
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-    <title>{pageTitle}</title>
-    <meta name="theme-color" content="#4c92c1" />
+    <title>{pageTitleText}</title>
+    <meta
+      name="theme-color"
+      content="#ffffff"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0b0f14"
+      media="(prefers-color-scheme: dark)"
+    />
     {/* 考试页面不该出现在搜索结果里，也不该被抓。 */}
     <meta name="robots" content="noindex, nofollow" />
     <ThemeScript />
@@ -44,18 +55,20 @@ const pageTitle = title
   <body
     class:list={[
       "bg-surface text-ink",
-      /* CanFrame 的顶栏固定 max-w-7xl，没有宽度 prop —— 这个类只用来在
+      /* content 布局的顶栏固定 max-w-7xl，没有宽度 prop —— 这个类只用来在
          globals.css 里，从站点这一侧把非 wide 页面的顶栏收回 max-w-5xl，
-         和正文对齐。 */
-      !wide && "chrome-header-narrow",
+         和正文对齐。tool 布局的宽度由侧栏决定，不挂。 */
+      !wide && !isAdmin && "chrome-header-narrow",
     ]}
   >
     <Frame
       messages={messages}
       locale={locale}
       member={member}
-      pathname={Astro.url.pathname}
+      pathname={path}
       signInHref={signInUrl(Astro.url)}
+      layout={isAdmin ? "tool" : "content"}
+      afterSignOut={signOutTarget(path)}
       client:load
     >
       <div

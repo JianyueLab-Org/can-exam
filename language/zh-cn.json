@@ -5,6 +5,7 @@
     "signingOut": "正在退出…",
     "signOutFailed": "退出失败，请重试。",
     "examCentre": "考试",
+    "training": "培训资料",
     "admin": "题库管理",
     "signInRequired": "请先登录",
     "signInHint": "考试中心需要登录后才能使用。登录入口在主站，登录完回到这一页即可。",

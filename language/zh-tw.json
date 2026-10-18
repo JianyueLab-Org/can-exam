@@ -5,6 +5,7 @@
     "signingOut": "正在登出…",
     "signOutFailed": "登出失敗，請重試。",
     "examCentre": "考試",
+    "training": "培訓資料",
     "admin": "題庫管理",
     "signInRequired": "請先登入",
     "signInHint": "考試中心需要登入後才能使用。登入入口在主站，登入完回到這一頁即可。",
