@@ -291,5 +291,30 @@
       "forbidden": "どの division の教員でもありません。",
       "gone": "その問題は存在しません。他の人が削除した可能性があります。"
     }
+  },
+  "training": {
+    "title": "訓練教材",
+    "description": "各支部が作成した管制訓練教材です。教材は規範的な文書ではありません。支部の規則やSOPと矛盾する場合は、規則とSOPが優先します。",
+    "publishedCount": "{total}支部中、{count}支部が教材を公開",
+    "materialCount": "全{count}編",
+    "open": "教材を見る",
+    "pending": "未公開",
+    "pendingDescription": "この支部はまだ訓練教材を公開していません。",
+    "back": "訓練教材へ戻る",
+    "backToCurriculum": "教材一覧へ戻る",
+    "onThisPage": "このページの目次",
+    "overview": "教材の全体像",
+    "overviewDescription": "教材の位置付け、適用の優先順位、席別の必修目安、修了の考え方。",
+    "order": "推奨学習順序",
+    "rulesLink": "この支部の管制規則",
+    "languageNote": "本教材は支部により{language}で作成されています。原文が優先します。",
+    "draft": "草案",
+    "draftTitle": "草案",
+    "draftNotice": "本文書は支部によりまだ正式に公布されていません。内容が変更される可能性があるため、最終的な根拠として扱わないでください。",
+    "languages": {
+      "ja": "日本語",
+      "zh": "中国語",
+      "en": "英語"
+    }
   }
 }

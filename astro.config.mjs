@@ -2,7 +2,57 @@
 import { defineConfig } from "astro/config";
 import node from "@astrojs/node";
 import vue from "@astrojs/vue";
+import mdx from "@astrojs/mdx";
+import { unified } from "@astrojs/markdown-remark";
 import tailwindcss from "@tailwindcss/vite";
+
+/**
+ * Wrap every markdown table in a scroll container.
+ *
+ * Eight of the division documents carry a table — the JPN training syllabus,
+ * the JPN ATC rules — three or four columns of Japanese that are wider than a
+ * phone. Without a container of its own the table widens the *article*, and
+ * then the whole page scrolls sideways: every heading and paragraph on it
+ * sits off-centre, not just the table.
+ *
+ * This has to be a wrapper element rather than `display: block; overflow: auto`
+ * on the table itself, which is the shorter CSS-only version of the same fix:
+ * changing a table's `display` drops its `table` role from the accessibility
+ * tree, so a screen reader loses row and column navigation through exactly the
+ * documents — a syllabus, a rules index — where the grid is the content. The
+ * paired styles are `.table-scroll` in src/styles/globals.css.
+ *
+ * Hand-rolled rather than pulling in `unist-util-visit`: it is a dozen lines,
+ * and the alternative is depending on a package that is currently only a
+ * transitive dependency of Astro's own markdown pipeline.
+ *
+ * The node shape is spelled out locally rather than imported from `hast` for
+ * the same reason — this file is `@ts-check`ed, and borrowing types from a
+ * package nothing here declares is how a config breaks on an unrelated bump.
+ *
+ * @typedef {{ type: string, tagName?: string, properties?: Record<string, unknown>, children?: HastNode[] }} HastNode
+ */
+function rehypeScrollableTables() {
+  /** @param {HastNode} tree */
+  return (tree) => {
+    /** @param {HastNode} node */
+    const walk = (node) => {
+      if (!Array.isArray(node.children)) return;
+      for (const child of node.children) walk(child);
+      node.children = node.children.map((child) =>
+        child.type === "element" && child.tagName === "table"
+          ? {
+              type: "element",
+              tagName: "div",
+              properties: { className: ["table-scroll"] },
+              children: [child],
+            }
+          : child,
+      );
+    };
+    walk(tree);
+  };
+}
 
 /**
  * 考试中心。第三个从 can-web 的形状里长出来的卫星站点，和 can-dev、can-radar
@@ -20,7 +70,17 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
-  integrations: [vue()],
+  integrations: [vue(), mdx()],
+
+  // 训练教材（MDX）里的表格外面包一层 `.table-scroll`，见上面的插件。
+  // `markdown.rehypePlugins` 是已弃用的写法，管线改由 `markdown.processor` 接一个
+  // unified() 实例。@astrojs/markdown-remark 钉成 astro 自己解析到的那一版，两边
+  // 才是同一个模块：astro 按实例而不是按形状认自己的 processor，两份拷贝意味着插件
+  // 静默失效，表格失去滚动容器，整页开始横向滚动，而没有任何东西报错。
+  // 跟着 astro 和 @astrojs/mdx 一起升，并确认 `bun.lock` 里只有一份。验证看构建
+  // 产物而不是构建日志：`grep -o table-scroll dist/server/chunks/* | wc -l` 应等于
+  // src/content 里的表格数（15）。
+  markdown: { processor: unified({ rehypePlugins: [rehypeScrollableTables] }) },
 
   /**
    * **必须关掉，否则每一个 POST 都是 403** —— 而这个站点几乎全是 POST。
