@@ -293,14 +293,14 @@
     }
   },
   "training": {
-    "title": "训练教材",
-    "description": "各分部编写的管制训练教材。教材为非规范性材料，与分部规则或 SOP 冲突时以规则、SOP 为准。",
+    "title": "培训资料",
+    "description": "各分部编写的管制培训资料。教材为非规范性材料，与分部规则或 SOP 冲突时以规则、SOP 为准。",
     "publishedCount": "{total} 个分部中，{count} 个已发布教材",
     "materialCount": "{count} 篇教材",
     "open": "查看教材",
     "pending": "尚未发布",
-    "pendingDescription": "该分部尚未发布训练教材。",
-    "back": "返回训练教材",
+    "pendingDescription": "该分部尚未发布培训资料。",
+    "back": "返回培训资料",
     "backToCurriculum": "返回教材目录",
     "onThisPage": "本页目录",
     "overview": "教材总览",

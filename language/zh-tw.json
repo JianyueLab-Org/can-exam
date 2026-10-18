@@ -293,14 +293,14 @@
     }
   },
   "training": {
-    "title": "訓練教材",
-    "description": "各分部編寫的管制訓練教材。教材為非規範性材料，與分部規則或 SOP 衝突時以規則、SOP 為準。",
+    "title": "培訓資料",
+    "description": "各分部編寫的管制培訓資料。教材為非規範性材料，與分部規則或 SOP 衝突時以規則、SOP 為準。",
     "publishedCount": "{total} 個分部中，{count} 個已發布教材",
     "materialCount": "{count} 篇教材",
     "open": "檢視教材",
     "pending": "尚未發布",
-    "pendingDescription": "該分部尚未發布訓練教材。",
-    "back": "返回訓練教材",
+    "pendingDescription": "該分部尚未發布培訓資料。",
+    "back": "返回培訓資料",
     "backToCurriculum": "返回教材目錄",
     "onThisPage": "本頁目錄",
     "overview": "教材總覽",
