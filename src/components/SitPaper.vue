@@ -70,9 +70,10 @@ const questionPrefix = useId();
 const sitting = ref<Sitting | null>(props.sitting);
 /** 题号 -> 选中的选项 id。单选题也是一组，只是长度恒为 1。 */
 const answers = ref<Record<number, number[]>>({});
-const errorCode = ref<string | null>(props.loadError);
-const error = ref<string | null>(
-  props.loadError ? errorText(props.loadError) : null,
+// 错误只存一个码，文案和「去设置分部」的链接都由它算出来，两者不会错位。
+const errorCode = ref<string | null>(props.loadError || null);
+const error = computed(() =>
+  errorCode.value === null ? null : errorText(errorCode.value),
 );
 const loading = ref(false);
 const submitting = ref(false);
@@ -196,7 +197,7 @@ function restore() {
 /** 服务端没能把卷子读出来时（多半是直接访问了没有 token 的地址），这里抽一张。 */
 async function draw() {
   loading.value = true;
-  error.value = null;
+  errorCode.value = null;
   try {
     sitting.value = await api<Sitting>(
       `/api/v1/sit/${encodeURIComponent(props.slug)}`,
@@ -209,7 +210,6 @@ async function draw() {
     restore();
   } catch (err) {
     errorCode.value = (err as { error?: string }).error ?? "";
-    error.value = errorText(errorCode.value);
   } finally {
     loading.value = false;
   }
@@ -219,7 +219,7 @@ async function submit() {
   if (submitting.value || submitted.value) return;
   confirming.value = false;
   submitting.value = true;
-  error.value = null;
+  errorCode.value = null;
 
   try {
     result.value = await api<SittingResult>(
@@ -239,7 +239,7 @@ async function submit() {
       // 功了。分数取不回来（上游不会重发），所以让人回列表去看。
       submitted.value = true;
     } else {
-      error.value = errorText(code);
+      errorCode.value = code;
     }
   } finally {
     submitting.value = false;
