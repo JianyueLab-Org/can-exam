@@ -7,28 +7,19 @@ import { unified } from "@astrojs/markdown-remark";
 import tailwindcss from "@tailwindcss/vite";
 
 /**
- * Wrap every markdown table in a scroll container.
+ * 给每张 markdown 表格套一层滚动容器。
  *
- * Eight of the division documents carry a table — the JPN training syllabus,
- * the JPN ATC rules — three or four columns of Japanese that are wider than a
- * phone. Without a container of its own the table widens the *article*, and
- * then the whole page scrolls sideways: every heading and paragraph on it
- * sits off-centre, not just the table.
+ * 7 篇培训资料共 15 张表，全在 src/content/training，三四列的日文，比手机屏幕
+ * 宽。表格没有自己的容器时会撑宽整篇文章，整页横向滚动，标题和段落都跟着偏离
+ * 中线。
  *
- * This has to be a wrapper element rather than `display: block; overflow: auto`
- * on the table itself, which is the shorter CSS-only version of the same fix:
- * changing a table's `display` drops its `table` role from the accessibility
- * tree, so a screen reader loses row and column navigation through exactly the
- * documents — a syllabus, a rules index — where the grid is the content. The
- * paired styles are `.table-scroll` in src/styles/globals.css.
+ * 必须是包一层元素，而不是给表格设 `display: block; overflow: auto`：改 display
+ * 会让表格丢掉无障碍树里的 `table` 角色，读屏软件就无法按行列浏览。配套样式是
+ * can-ui 的 components.css 里的 `.table-scroll`。
  *
- * Hand-rolled rather than pulling in `unist-util-visit`: it is a dozen lines,
- * and the alternative is depending on a package that is currently only a
- * transitive dependency of Astro's own markdown pipeline.
- *
- * The node shape is spelled out locally rather than imported from `hast` for
- * the same reason — this file is `@ts-check`ed, and borrowing types from a
- * package nothing here declares is how a config breaks on an unrelated bump.
+ * 手写而不引 `unist-util-visit`：它只是 Astro markdown 管线的传递依赖。节点形状
+ * 在本地声明而不从 `hast` 导入，同理 —— 本文件开着 `@ts-check`，借用没声明的包
+ * 的类型，会在无关的升级上崩。
  *
  * @typedef {{ type: string, tagName?: string, properties?: Record<string, unknown>, children?: HastNode[] }} HastNode
  */
@@ -58,10 +49,10 @@ function rehypeScrollableTables() {
  * 考试中心。第三个从 can-web 的形状里长出来的卫星站点，和 can-dev、can-radar
  * 同一套：Astro SSR + Vue 岛屿 + Tailwind v4，没有自己的数据库。
  *
- * `output: "server"` 是必须的，而且理由比雷达那边更硬：这一整个站点没有一个
- * 页面是所有人看到的东西都一样的 —— 能考什么取决于你的 rating，卷子是随机抽
- * 的，管理页取决于你是不是 SUP。预渲染任何一页都是把某一个人的状态发给下一个
- * 访客。
+ * `output: "server"` 是必须的，而且理由比雷达那边更硬：考试页和管理页没有一个
+ * 是所有人看到的东西都一样的 —— 能考什么取决于你的 rating，卷子是随机抽的，
+ * 管理页取决于你是不是 SUP。预渲染其中任何一页都是把某一个人的状态发给下一个
+ * 访客。`/training` 是公开的，但顶栏读会话，同样不预渲染。
  *
  * **题库和答案一点都不在这里。** 它们在 can-api 的 MySQL 里，判卷也在那边。
  * 这个站点拿到的卷子是 can-api 抽好、去掉答案之后的那一份 —— 它就算被整个翻

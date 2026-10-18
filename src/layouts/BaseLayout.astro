@@ -71,14 +71,21 @@ const isAdmin = path === "/admin" || path.startsWith("/admin/");
       afterSignOut={signOutTarget(path)}
       client:load
     >
-      <div
-        class:list={[
-          "mx-auto w-full px-4 py-8 sm:px-6 lg:px-8",
-          wide ? "max-w-7xl" : "max-w-5xl",
-        ]}
-      >
-        <slot />
-      </div>
+      {
+        isAdmin ? (
+          // tool 布局：CanFrame 已经包了 max-w-7xl 和内边距，这里直接放内容。
+          <slot />
+        ) : (
+          <div
+            class:list={[
+              "mx-auto w-full px-4 py-8 sm:px-6 lg:px-8",
+              wide ? "max-w-7xl" : "max-w-5xl",
+            ]}
+          >
+            <slot />
+          </div>
+        )
+      }
     </Frame>
   </body>
 </html>

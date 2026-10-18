@@ -22,7 +22,13 @@ import {
   PageHeader,
 } from "@jianyuelab-org/can-ui";
 import { createTranslator } from "@/lib/i18n";
-import { paperForRecord, recordsForScope, scopeHref } from "@/lib/examCentre";
+import {
+  paperForRecord,
+  recordsForScope,
+  scopeHref,
+  sitHref,
+} from "@/lib/examCentre";
+import { pageTitle } from "@/lib/pageTitle";
 import {
   api,
   ratingName,
@@ -68,9 +74,23 @@ const shownRecords = computed(() =>
 );
 
 function selectScope(event: MouseEvent, next: ExamScope) {
+  // 带修饰键或非左键的点击交给浏览器：新标签页、新窗口照常打开这条链接。
+  if (
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
+  )
+    return;
   event.preventDefault();
   scope.value = next;
   history.replaceState(null, "", scopeHref(next));
+  // 标题跟着栏走：飞行员栏只有站名，管制员栏是「管制员 · 站名」。
+  document.title = pageTitle(
+    next === "controllers" ? t("home.controllers") : undefined,
+    document.documentElement.lang,
+  );
 }
 
 function formatDate(iso: string): string {
@@ -88,7 +108,7 @@ async function start(paper: PaperSummary) {
   if (!paper.eligible || busy.value) return;
 
   if (paper.openSitting) {
-    window.location.href = `/sit/${paper.slug}?token=${encodeURIComponent(paper.openSitting)}`;
+    window.location.href = sitHref(paper.slug, paper.openSitting, scope.value);
     return;
   }
 
@@ -99,7 +119,7 @@ async function start(paper: PaperSummary) {
       `/api/v1/sit/${encodeURIComponent(paper.slug)}`,
       { method: "POST" },
     );
-    window.location.href = `/sit/${paper.slug}?token=${encodeURIComponent(sitting.token)}`;
+    window.location.href = sitHref(paper.slug, sitting.token, scope.value);
   } catch (err) {
     const code = (err as { error?: string }).error ?? "";
     error.value = t(`sit.error.${code}`) || t("frame.error");

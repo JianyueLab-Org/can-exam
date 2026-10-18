@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import type { AttemptRecord, PaperSummary } from "./exams";
 import {
+  doneHref,
   paperForRecord,
   parseScope,
   recordsForScope,
   scopeHref,
+  sitHref,
 } from "./examCentre";
 
 const paper = (id: number, scope: "pilots" | "controllers"): PaperSummary => ({
@@ -67,5 +69,25 @@ describe("scopeHref", () => {
   test("pilots is the root", () => {
     expect(scopeHref("pilots")).toBe("/");
     expect(scopeHref("controllers")).toBe("/?scope=controllers");
+  });
+});
+
+describe("doneHref", () => {
+  test("飞行员栏回到根页", () => {
+    expect(doneHref("pilots")).toBe("/?done=1");
+  });
+  test("管制员栏带着 scope", () => {
+    expect(doneHref("controllers")).toBe("/?scope=controllers&done=1");
+  });
+});
+
+describe("sitHref", () => {
+  test("飞行员栏不带 scope", () => {
+    expect(sitHref("entry", "a b", "pilots")).toBe("/sit/entry?token=a%20b");
+  });
+  test("管制员栏追加 scope", () => {
+    expect(sitHref("s1", "tok", "controllers")).toBe(
+      "/sit/s1?token=tok&scope=controllers",
+    );
   });
 });

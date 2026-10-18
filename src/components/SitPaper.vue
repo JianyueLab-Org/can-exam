@@ -45,9 +45,11 @@ import {
   api,
   countdown,
   ratingName,
+  type ExamScope,
   type Sitting,
   type SittingResult,
 } from "@/lib/exams";
+import { doneHref } from "@/lib/examCentre";
 
 const props = defineProps<{
   messages: Record<string, unknown>;
@@ -58,6 +60,8 @@ const props = defineProps<{
   loadError: string | null;
   /** 管制员中心首页：`region` 错误指向它，去那里设置所属分部。 */
   controllerHref: string;
+  /** 从哪一栏进的考场，服务端从 `?scope=` 读出；交卷后回到同一栏。 */
+  scope: ExamScope;
 }>();
 
 const t = createTranslator(props.messages);
@@ -327,7 +331,7 @@ onBeforeUnmount(() => clearInterval(ticker));
           {{ t("sit.result.retry") }}
         </p>
 
-        <Button as="a" href="/?done=1" class="mt-6">
+        <Button as="a" :href="doneHref(scope)" class="mt-6">
           {{ t("sit.result.back") }}
         </Button>
       </div>

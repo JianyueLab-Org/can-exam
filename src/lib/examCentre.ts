@@ -16,6 +16,17 @@ export function scopeHref(scope: ExamScope): string {
   return scope === "controllers" ? "/?scope=controllers" : "/";
 }
 
+/** 考完回来的落点：回到交卷时所在的那一栏，并带 `done=1` 触发重读。 */
+export function doneHref(scope: ExamScope): string {
+  return scope === "controllers" ? "/?scope=controllers&done=1" : "/?done=1";
+}
+
+/** 考场地址。只有管制员栏带 `scope`，规则同 `scopeHref`。 */
+export function sitHref(slug: string, token: string, scope: ExamScope): string {
+  const base = `/sit/${slug}?token=${encodeURIComponent(token)}`;
+  return scope === "controllers" ? `${base}&scope=controllers` : base;
+}
+
 export function paperForRecord(
   record: AttemptRecord,
   papers: PaperSummary[],
