@@ -12,7 +12,7 @@
 import { siteUrl, originsFromEnv } from "@jianyuelab-org/can-ui";
 
 export interface AtcRuleDoc {
-  /** `division.region` the document governs — 1 PRC, 2 USA, 3 JPN, 4 HK. */
+  /** `division.region` the document governs — 1 PRC, 2 USA, 3 JPN, 4 HKG, 5 ROC. */
   region: number;
   /** can-controller 上 /rules 下的 URL 段，也是它 `rules` 集合里的 id。 */
   key: string;

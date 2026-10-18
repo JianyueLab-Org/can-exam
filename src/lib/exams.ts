@@ -191,6 +191,7 @@ export const REGIONS: Record<number, string> = {
   2: "usa",
   3: "jpn",
   4: "hk",
+  5: "roc",
 };
 
 /** Division 的字典键，页面拿它到 `region.*` 下面取本地化的名字。 */

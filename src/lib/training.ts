@@ -15,8 +15,8 @@
  * Browser-safe: no astro:content import.
  */
 
-// `division.region` 里成员可加入的四个分部，0（全网）不在其中。
-export const SELECTABLE_REGIONS = [1, 2, 3, 4] as const;
+// `division.region` 里成员可加入的五个分部，0（全网）不在其中。
+export const SELECTABLE_REGIONS = [1, 2, 3, 4, 5] as const;
 
 export interface TrainingMaterial {
   /** Collection id under the division folder, and the URL segment. */
@@ -35,7 +35,7 @@ export interface TrainingGroup {
 }
 
 export interface TrainingCurriculum {
-  /** `division.region` — 1 PRC, 2 USA, 3 JPN, 4 HK. */
+  /** `division.region` — 1 PRC, 2 USA, 3 JPN, 4 HKG, 5 ROC. */
   region: number;
   /** URL segment and the collection folder name. */
   key: string;
