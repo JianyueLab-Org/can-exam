@@ -1,0 +1,192 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { AlertBox, ICON_PATHS } from "@jianyuelab-org/can-ui";
+import { getLocale, useTranslations } from "@/lib/i18n";
+import { readMember } from "@/server/session";
+import { regionKey } from "@/lib/exams";
+import {
+  curriculumHref,
+  findCurriculum,
+  findMaterial,
+  materialHref,
+} from "@/lib/training";
+
+const { division, material: materialId } = Astro.params;
+const curriculum = findCurriculum(division);
+const training = await getCollection("training");
+const availableIds = training.map((entry) => entry.id);
+
+if (!curriculum) {
+  return Astro.redirect("/training");
+}
+
+// The overview is the series README rather than a numbered material, so it is
+// resolved separately and labelled from the dictionary.
+const isOverview = materialId === curriculum.overviewId;
+const material = isOverview
+  ? undefined
+  : findMaterial(curriculum, materialId, availableIds);
+const entryId = `${curriculum.key}/${materialId}`;
+const entry = training.find((candidate) => candidate.id === entryId);
+
+if (!entry || (!isOverview && !material)) {
+  return Astro.redirect(curriculumHref(curriculum));
+}
+
+const { Content, headings } = await render(entry);
+const sections = headings.filter((heading) => heading.depth === 2);
+
+// Previous/next through the numbered materials, so a trainee can read the
+// series straight through without going back to the index every time.
+const published = curriculum.materials.filter((candidate) =>
+  availableIds.includes(`${curriculum.key}/${candidate.id}`),
+);
+const position = material
+  ? published.findIndex((candidate) => candidate.id === material.id)
+  : -1;
+const previous = position > 0 ? published[position - 1] : undefined;
+const next =
+  position >= 0 && position < published.length - 1
+    ? published[position + 1]
+    : undefined;
+
+const locale = getLocale(Astro.cookies);
+// 教材页是公开的，会话只用来画顶栏。
+const member = await readMember(Astro);
+const t = useTranslations(locale, "training");
+const tRegion = useTranslations(locale, "region");
+const divisionName = tRegion(regionKey(curriculum.region));
+const title = material ? material.title : t("overview");
+---
+
+<BaseLayout member={member} title={title}>
+  <a
+    href={curriculumHref(curriculum)}
+    class="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-can"
+  >
+    <svg
+      class="size-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d={ICON_PATHS.arrowLeft}></path>
+    </svg>
+    {t("backToCurriculum")}
+  </a>
+
+  <div class="mb-8">
+    <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-can">
+      {t("title")} · {divisionName}
+      {material ? ` · ${material.no}` : ""}
+    </p>
+    <div class="flex flex-wrap items-center gap-3">
+      <h1
+        lang={material ? curriculum.lang : undefined}
+        class="text-2xl font-bold tracking-tight text-ink sm:text-3xl"
+      >
+        {title}
+      </h1>
+      {
+        curriculum.draft && (
+          <span class="badge badge-warning">{t("draft")}</span>
+        )
+      }
+    </div>
+    {
+      material && (
+        <p lang={curriculum.lang} class="mt-2 text-muted">
+          {material.summary}
+        </p>
+      )
+    }
+    {
+      curriculum.draft && (
+        <AlertBox variant="warning" title={t("draftTitle")} class="mt-4">
+          {t("draftNotice")}
+        </AlertBox>
+      )
+    }
+  </div>
+
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_16rem]">
+    <div class="min-w-0">
+      <article class="card p-6 sm:p-8">
+        <div
+          lang={curriculum.lang}
+          class="doc-content prose max-w-none dark:prose-invert prose-headings:tracking-tight prose-a:font-medium"
+        >
+          <Content />
+        </div>
+      </article>
+
+      {
+        (previous || next) && (
+          <nav class="mt-6 grid gap-3 sm:grid-cols-2">
+            {previous ? (
+              <a
+                href={materialHref(curriculum, previous)}
+                class="card group flex flex-col p-4 transition-shadow hover:shadow-card-hover"
+              >
+                <span class="text-xs text-faint">{previous.no}</span>
+                <span
+                  lang={curriculum.lang}
+                  class="mt-0.5 text-sm font-semibold text-ink group-hover:text-can"
+                >
+                  {previous.title}
+                </span>
+              </a>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <a
+                href={materialHref(curriculum, next)}
+                class="card group flex flex-col p-4 text-right transition-shadow hover:shadow-card-hover"
+              >
+                <span class="text-xs text-faint">{next.no}</span>
+                <span
+                  lang={curriculum.lang}
+                  class="mt-0.5 text-sm font-semibold text-ink group-hover:text-can"
+                >
+                  {next.title}
+                </span>
+              </a>
+            )}
+          </nav>
+        )
+      }
+    </div>
+
+    {
+      sections.length > 0 && (
+        <aside class="order-first lg:order-none lg:sticky lg:top-24 lg:self-start">
+          <nav class="card p-4" aria-label={t("onThisPage")}>
+            <h2 class="mb-3 px-2.5 text-xs font-semibold uppercase tracking-widest text-faint">
+              {t("onThisPage")}
+            </h2>
+            <ul class="max-h-[60vh] space-y-0.5 overflow-y-auto">
+              {sections.map((heading) => (
+                <li>
+                  <a
+                    href={`#${heading.slug}`}
+                    lang={curriculum.lang}
+                    class="block rounded-control px-2.5 py-1.5 text-sm text-muted transition-colors hover:bg-surface-sunken hover:text-ink"
+                  >
+                    {heading.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+      )
+    }
+  </div>
+</BaseLayout>

@@ -1,0 +1,125 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { ICON_PATHS } from "@jianyuelab-org/can-ui";
+import { getLocale, useTranslations } from "@/lib/i18n";
+import { readMember } from "@/server/session";
+import { regionKey } from "@/lib/exams";
+import { buildTrainingDivisions } from "@/lib/training";
+
+const locale = getLocale(Astro.cookies);
+// 教材页是公开的，会话只用来画顶栏。
+const member = await readMember(Astro);
+const t = useTranslations(locale, "training");
+const tRegion = useTranslations(locale, "region");
+
+const training = await getCollection("training");
+const divisions = buildTrainingDivisions(training.map((entry) => entry.id));
+const published = divisions.filter((division) => division.curriculum).length;
+---
+
+<BaseLayout member={member} title={t("title")}>
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+      {t("title")}
+    </h1>
+    <p class="mt-2 max-w-2xl text-muted">{t("description")}</p>
+    <p class="mt-4 text-sm text-faint">
+      {t("publishedCount", { count: published, total: divisions.length })}
+    </p>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    {
+      divisions.map((division) => {
+        const name = tRegion(regionKey(division.region));
+        const curriculum = division.curriculum;
+        return curriculum && division.href ? (
+          <a
+            href={division.href}
+            class="card group flex flex-col p-5 transition-shadow hover:shadow-card-hover"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <span class="flex size-10 items-center justify-center rounded-control bg-info-bg text-info-fg">
+                <svg
+                  class="size-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d={ICON_PATHS.bookOpen}
+                  />
+                </svg>
+              </span>
+              <div class="flex flex-wrap items-center justify-end gap-1.5">
+                {curriculum.draft && (
+                  <span class="badge badge-warning">{t("draft")}</span>
+                )}
+                <span class="badge badge-info">
+                  {t(`languages.${curriculum.lang}`)}
+                </span>
+              </div>
+            </div>
+            <h2 class="mt-4 text-base font-semibold text-ink">{name}</h2>
+            <p lang={curriculum.lang} class="mt-1.5 flex-1 text-sm text-muted">
+              {curriculum.title}
+            </p>
+            <div class="mt-4 flex items-center justify-between gap-3">
+              <span class="inline-flex items-center gap-1.5 text-sm font-medium text-can">
+                {t("open")}
+                <svg
+                  class="size-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d={ICON_PATHS.arrowRight}
+                  />
+                </svg>
+              </span>
+              <span class="text-xs text-faint">
+                {t("materialCount", { count: division.materialCount ?? 0 })}
+              </span>
+            </div>
+          </a>
+        ) : (
+          <div class="card flex flex-col p-5">
+            <div class="flex items-start justify-between gap-3">
+              <span class="flex size-10 items-center justify-center rounded-control bg-neutral-bg text-faint">
+                <svg
+                  class="size-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d={ICON_PATHS.bookOpen}
+                  />
+                </svg>
+              </span>
+              <span class="badge badge-neutral">{t("pending")}</span>
+            </div>
+            <h2 class="mt-4 text-base font-semibold text-muted">{name}</h2>
+            <p class="mt-1.5 flex-1 text-sm text-faint">
+              {t("pendingDescription")}
+            </p>
+          </div>
+        );
+      })
+    }
+  </div>
+</BaseLayout>

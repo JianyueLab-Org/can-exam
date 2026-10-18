@@ -208,9 +208,36 @@ region 和 promoteTo 两个下拉。提升只对 `promotionRegions` 中的 divis
 
 跳过第 2 步站点起得来，但一场考试都列不出来。那不是故障，是题库真的空着。
 
+## 页面、外壳、标题
+
+- 导航（`src/lib/nav.ts`）：考试 `/`、培训资料 `/training`；题库 `/admin` 对 rating ≥ 8 才画。
+- 布局：`/admin` 用 `tool`，其余用 `content`。
+- 标题 `<页面> · <siteLabel 站名>`，在 `src/lib/pageTitle.ts`。根页只显示站名。
+- 退出（`src/lib/signOutTarget.ts`）：从 `/sit/*`、`/admin`、`/admin/*` 退出去 can-web `/`，其余页面原地刷新。
+- `theme-color` 两条 meta：浅色 `#ffffff`，深色 `#0b0f14`。
+- 考试中心分栏用 `?scope=`（`src/lib/examCentre.ts`）：`/` 是飞行员栏，`/?scope=controllers` 是管制员栏。服务端读取。
+- 成绩记录按所属卷子分栏。`examId` 0 是旧的入网测试，对应卷子 1。找不到卷子的记录归飞行员栏。
+- 管制员栏有「管制员等级如何取得」卡片。
+- `region` 原因显示文字并链到 can-controller `/`。考场（`SitPaper.vue`）发卷、交卷报该错误时同样处理。
+
+## 培训资料
+
+- 正文在 `src/content/training/<分部>/*.mdx`，索引在 `src/lib/training.ts`。
+- 页面：`/training`、`/training/<分部>`、`/training/<分部>/<资料>`。公开；会话只用于顶栏。
+- `src/lib/atcRules.ts` 是 can-controller 同名索引的副本。
+- MDX 由 `@astrojs/mdx` 和 `rehypeScrollableTables` 渲染。正文样式来自 `@tailwindcss/typography`（`globals.css` 加载）。
+- `@astrojs/markdown-remark` 固定 7.3.1，保持只有一份。
+
 ## 和 can-web 的关系
 
-can-web 的 `/exams/*` **还在，没有动**。它调的是 can-api 那条硬编码的
-`/api/v1/pilot/exam/new`（15 题固定卷、固定顺序），那条路是 published contract，
-这次一个字都没改。两套并行跑着，等这边跑稳了再决定迁移和跳转 —— 那是另一次改
-动，不要顺手做掉。
+can-web 的 `/exams/*` 转发到这里：
+
+| can-web                                        | 这里                      |
+| ---------------------------------------------- | ------------------------- |
+| `/exams`、`/exams/pilots`、`/exams/pilots/new` | `/`                       |
+| `/exams/controllers`                           | `/?scope=controllers`     |
+| `/exams/training`                              | `/training`               |
+| `/exams/training/<分部>`                       | `/training/<分部>`        |
+| `/exams/training/<分部>/<资料>`                | `/training/<分部>/<资料>` |
+| `/exams/divisions`                             | can-controller `/`        |
+| 其他 `/exams/*`                                | `/`（302）                |

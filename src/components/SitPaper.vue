@@ -45,9 +45,11 @@ import {
   api,
   countdown,
   ratingName,
+  type ExamScope,
   type Sitting,
   type SittingResult,
 } from "@/lib/exams";
+import { doneHref } from "@/lib/examCentre";
 
 const props = defineProps<{
   messages: Record<string, unknown>;
@@ -56,6 +58,10 @@ const props = defineProps<{
   sitting: Sitting | null;
   /** 服务端读卷子时上游给的错误码。 */
   loadError: string | null;
+  /** 管制员中心首页：`region` 错误指向它，去那里设置所属分部。 */
+  controllerHref: string;
+  /** 从哪一栏进的考场，服务端从 `?scope=` 读出；交卷后回到同一栏。 */
+  scope: ExamScope;
 }>();
 
 const t = createTranslator(props.messages);
@@ -68,8 +74,10 @@ const questionPrefix = useId();
 const sitting = ref<Sitting | null>(props.sitting);
 /** 题号 -> 选中的选项 id。单选题也是一组，只是长度恒为 1。 */
 const answers = ref<Record<number, number[]>>({});
-const error = ref<string | null>(
-  props.loadError ? errorText(props.loadError) : null,
+// 错误只存一个码，文案和「去设置分部」的链接都由它算出来，两者不会错位。
+const errorCode = ref<string | null>(props.loadError || null);
+const error = computed(() =>
+  errorCode.value === null ? null : errorText(errorCode.value),
 );
 const loading = ref(false);
 const submitting = ref(false);
@@ -193,7 +201,7 @@ function restore() {
 /** 服务端没能把卷子读出来时（多半是直接访问了没有 token 的地址），这里抽一张。 */
 async function draw() {
   loading.value = true;
-  error.value = null;
+  errorCode.value = null;
   try {
     sitting.value = await api<Sitting>(
       `/api/v1/sit/${encodeURIComponent(props.slug)}`,
@@ -205,7 +213,7 @@ async function draw() {
     window.history.replaceState({}, "", url);
     restore();
   } catch (err) {
-    error.value = errorText((err as { error?: string }).error ?? "");
+    errorCode.value = (err as { error?: string }).error ?? "";
   } finally {
     loading.value = false;
   }
@@ -215,7 +223,7 @@ async function submit() {
   if (submitting.value || submitted.value) return;
   confirming.value = false;
   submitting.value = true;
-  error.value = null;
+  errorCode.value = null;
 
   try {
     result.value = await api<SittingResult>(
@@ -235,7 +243,7 @@ async function submit() {
       // 功了。分数取不回来（上游不会重发），所以让人回列表去看。
       submitted.value = true;
     } else {
-      error.value = errorText(code);
+      errorCode.value = code;
     }
   } finally {
     submitting.value = false;
@@ -323,16 +331,24 @@ onBeforeUnmount(() => clearInterval(ticker));
           {{ t("sit.result.retry") }}
         </p>
 
-        <Button as="a" href="/?done=1" class="mt-6">
+        <Button as="a" :href="doneHref(scope)" class="mt-6">
           {{ t("sit.result.back") }}
         </Button>
       </div>
     </Card>
 
     <template v-else>
-      <AlertBox v-if="error" variant="danger" class="mb-6">{{
-        error
-      }}</AlertBox>
+      <AlertBox v-if="error" variant="danger" class="mb-6">
+        {{ error }}
+        <!-- 缺分部成员资格：给一条去设置所属分部的路。 -->
+        <a
+          v-if="errorCode === 'region'"
+          :href="controllerHref"
+          class="mt-2 block text-sm underline"
+        >
+          {{ t("home.reason.regionLink") }}
+        </a>
+      </AlertBox>
       <AlertBox v-else-if="expired" variant="warning" class="mb-6">
         {{ t("sit.expired") }}
       </AlertBox>

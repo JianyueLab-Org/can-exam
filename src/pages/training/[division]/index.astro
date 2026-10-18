@@ -1,0 +1,208 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { AlertBox, ICON_PATHS, originsFromEnv } from "@jianyuelab-org/can-ui";
+import { getLocale, useTranslations } from "@/lib/i18n";
+import { readMember } from "@/server/session";
+import { regionKey } from "@/lib/exams";
+import { findCurriculum, materialHref, resolveGroups } from "@/lib/training";
+import { ATC_RULE_DOCS, ruleHref } from "@/lib/atcRules";
+
+const { division } = Astro.params;
+const curriculum = findCurriculum(division);
+const training = await getCollection("training");
+const availableIds = training.map((entry) => entry.id);
+
+// The series overview is what marks a curriculum as published — same gate as
+// buildTrainingDivisions uses for the division cards.
+const hasOverview =
+  !!curriculum &&
+  availableIds.includes(`${curriculum.key}/${curriculum.overviewId}`);
+
+if (!curriculum || !hasOverview) {
+  return Astro.redirect("/training");
+}
+
+const groups = resolveGroups(curriculum, availableIds);
+// 本分部的管制规则。它住在管制员中心（can-controller），所以下面那张卡片是跨站
+// 的 —— `ruleHref()` 拼的是绝对地址，`ATC_RULE_DOCS` 在这里只是一份索引副本。
+const rules = ATC_RULE_DOCS.find((doc) => doc.region === curriculum.region);
+
+const locale = getLocale(Astro.cookies);
+// 教材页是公开的，会话只用来画顶栏。
+const member = await readMember(Astro);
+const t = useTranslations(locale, "training");
+const tRegion = useTranslations(locale, "region");
+const divisionName = tRegion(regionKey(curriculum.region));
+---
+
+<BaseLayout member={member} title={curriculum.title}>
+  <a
+    href="/training"
+    class="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-can"
+  >
+    <svg
+      class="size-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d={ICON_PATHS.arrowLeft}></path>
+    </svg>
+    {t("back")}
+  </a>
+
+  <div class="mb-8">
+    <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-can">
+      {t("title")} · {divisionName}
+    </p>
+    <div class="flex flex-wrap items-center gap-3">
+      <h1
+        lang={curriculum.lang}
+        class="text-2xl font-bold tracking-tight text-ink sm:text-3xl"
+      >
+        {curriculum.title}
+      </h1>
+      {
+        curriculum.draft && (
+          <span class="badge badge-warning">{t("draft")}</span>
+        )
+      }
+    </div>
+    <p class="mt-2 text-sm text-muted">
+      {t("languageNote", { language: t(`languages.${curriculum.lang}`) })}
+    </p>
+    {
+      curriculum.draft && (
+        <AlertBox variant="warning" title={t("draftTitle")} class="mt-4">
+          {t("draftNotice")}
+        </AlertBox>
+      )
+    }
+  </div>
+
+  <div class="mb-8 grid gap-4 sm:grid-cols-2">
+    <a
+      href={`/training/${curriculum.key}/${curriculum.overviewId}`}
+      class="card group flex items-start gap-4 p-5 transition-shadow hover:shadow-card-hover"
+    >
+      <span
+        class="flex size-10 shrink-0 items-center justify-center rounded-control bg-info-bg text-info-fg"
+      >
+        <svg
+          class="size-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d={ICON_PATHS.bookOpen}></path>
+        </svg>
+      </span>
+      <span class="min-w-0">
+        <span
+          class="block text-base font-semibold text-ink group-hover:text-can"
+        >
+          {t("overview")}
+        </span>
+        <span class="mt-1 block text-sm text-muted">
+          {t("overviewDescription")}
+        </span>
+      </span>
+    </a>
+    {
+      rules && (
+        <a
+          href={ruleHref(rules, originsFromEnv(import.meta.env))}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="card group flex items-start gap-4 p-5 transition-shadow hover:shadow-card-hover"
+        >
+          <span class="flex size-10 shrink-0 items-center justify-center rounded-control bg-info-bg text-info-fg">
+            <svg
+              class="size-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d={ICON_PATHS.documentText}
+              />
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="block text-base font-semibold text-ink group-hover:text-can">
+              {t("rulesLink")}
+            </span>
+            <span lang={rules.lang} class="mt-1 block text-sm text-muted">
+              {rules.title}
+            </span>
+          </span>
+        </a>
+      )
+    }
+  </div>
+
+  <div class="card mb-8 p-5">
+    <p class="text-xs font-semibold uppercase tracking-widest text-faint">
+      {t("order")}
+    </p>
+    <p lang={curriculum.lang} class="mt-2 text-sm text-muted">
+      {curriculum.order}
+    </p>
+  </div>
+
+  <div class="space-y-8">
+    {
+      groups.map((group) => (
+        <section>
+          <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-faint">
+            <span class="flex size-6 items-center justify-center rounded-control bg-surface-sunken text-xs font-bold text-muted">
+              {group.key}
+            </span>
+            <span lang={curriculum.lang} class="normal-case tracking-normal">
+              {group.title}
+            </span>
+          </h2>
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {group.materials.map((material) => (
+              <a
+                href={materialHref(curriculum, material)}
+                class="card group flex flex-col p-4 transition-shadow hover:shadow-card-hover"
+              >
+                <span class="text-xs font-semibold tracking-widest text-can">
+                  {material.no}
+                </span>
+                <span
+                  lang={curriculum.lang}
+                  class="mt-1 text-sm font-semibold text-ink group-hover:text-can"
+                >
+                  {material.title}
+                </span>
+                <span
+                  lang={curriculum.lang}
+                  class="mt-1.5 text-xs leading-5 text-muted"
+                >
+                  {material.summary}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>

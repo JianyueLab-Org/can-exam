@@ -9,7 +9,9 @@
  */
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import SitPaper from "@/components/SitPaper.vue";
+import { siteUrl, originsFromEnv } from "@jianyuelab-org/can-ui";
 import { getLocale, getMessages } from "@/lib/i18n";
+import { parseScope } from "@/lib/examCentre";
 import type { Sitting } from "@/lib/exams";
 import { signInUrl } from "@/server/config";
 import { readMember } from "@/server/session";
@@ -25,6 +27,7 @@ if (!member) {
 }
 
 const token = Astro.url.searchParams.get("token");
+const scope = parseScope(Astro.url.searchParams.get("scope"));
 
 let sitting: Sitting | null = null;
 let loadError: string | null = null;
@@ -54,6 +57,8 @@ if (token) {
     slug={slug ?? ""}
     sitting={sitting}
     loadError={loadError}
+    scope={scope}
+    controllerHref={siteUrl("controller", "/", originsFromEnv(import.meta.env))}
     client:load
   />
 </BaseLayout>

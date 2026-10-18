@@ -23,6 +23,13 @@ import {
 } from "@jianyuelab-org/can-ui";
 import { createTranslator } from "@/lib/i18n";
 import {
+  paperForRecord,
+  recordsForScope,
+  scopeHref,
+  sitHref,
+} from "@/lib/examCentre";
+import { pageTitle } from "@/lib/pageTitle";
+import {
   api,
   ratingName,
   type AttemptRecord,
@@ -37,6 +44,12 @@ const props = defineProps<{
   /** 服务端读不到会话时为 true。这一页没有匿名用途。 */
   signedOut: boolean;
   signInHref: string;
+  /** 初始所在的栏，服务端从 `?scope=` 读出。 */
+  scope: ExamScope;
+  /** 管制员中心首页：缺分部资格时指向它。 */
+  controllerHref: string;
+  docsAtcHref: string;
+  rosterHref: string;
 }>();
 
 const t = createTranslator(props.messages);
@@ -48,18 +61,36 @@ const busy = ref<string | null>(null);
 
 const SCOPES: ExamScope[] = ["pilots", "controllers"];
 
-/** 只画有卷子的那一栏 —— 一个空的「管制员」标题下面什么都没有，比不画更糟。 */
-const sections = computed(() =>
-  SCOPES.map((scope) => ({
-    scope,
-    label: t(`home.${scope}`),
-    papers: papers.value.filter((paper) => paper.scope === scope),
-  })).filter((section) => section.papers.length > 0),
+const scope = ref<ExamScope>(props.scope);
+
+/** 当前这一栏的卷子。 */
+const shownPapers = computed(() =>
+  papers.value.filter((paper) => paper.scope === scope.value),
 );
 
-/** 成绩单上的一行属于哪场考试。`examId` 就是卷子的 id。 */
-function paperFor(record: AttemptRecord): PaperSummary | undefined {
-  return papers.value.find((paper) => paper.id === record.examId);
+/** 成绩单也按栏分：一条成绩属于它那张卷子的栏。 */
+const shownRecords = computed(() =>
+  recordsForScope(records.value, papers.value, scope.value),
+);
+
+function selectScope(event: MouseEvent, next: ExamScope) {
+  // 带修饰键或非左键的点击交给浏览器：新标签页、新窗口照常打开这条链接。
+  if (
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
+  )
+    return;
+  event.preventDefault();
+  scope.value = next;
+  history.replaceState(null, "", scopeHref(next));
+  // 标题跟着栏走：飞行员栏只有站名，管制员栏是「管制员 · 站名」。
+  document.title = pageTitle(
+    next === "controllers" ? t("home.controllers") : undefined,
+    document.documentElement.lang,
+  );
 }
 
 function formatDate(iso: string): string {
@@ -77,7 +108,7 @@ async function start(paper: PaperSummary) {
   if (!paper.eligible || busy.value) return;
 
   if (paper.openSitting) {
-    window.location.href = `/sit/${paper.slug}?token=${encodeURIComponent(paper.openSitting)}`;
+    window.location.href = sitHref(paper.slug, paper.openSitting, scope.value);
     return;
   }
 
@@ -88,7 +119,7 @@ async function start(paper: PaperSummary) {
       `/api/v1/sit/${encodeURIComponent(paper.slug)}`,
       { method: "POST" },
     );
-    window.location.href = `/sit/${paper.slug}?token=${encodeURIComponent(sitting.token)}`;
+    window.location.href = sitHref(paper.slug, sitting.token, scope.value);
   } catch (err) {
     const code = (err as { error?: string }).error ?? "";
     error.value = t(`sit.error.${code}`) || t("frame.error");
@@ -130,27 +161,61 @@ onMounted(async () => {
       </Button>
     </AlertBox>
 
-    <template v-else>
+    <div
+      role="tablist"
+      :aria-label="t('home.tabs')"
+      class="mb-6 flex gap-6 border-b border-subtle"
+    >
+      <a
+        v-for="s in SCOPES"
+        :key="s"
+        role="tab"
+        :href="scopeHref(s)"
+        :aria-selected="scope === s"
+        class="-mb-px border-b-2 pb-2 text-sm font-medium"
+        :class="
+          scope === s
+            ? 'border-can text-ink'
+            : 'border-transparent text-muted hover:text-ink'
+        "
+        @click="selectScope($event, s)"
+      >
+        {{ t(`home.${s}`) }}
+      </a>
+    </div>
+
+    <Card v-if="scope === 'controllers'" padding="lg" class="mb-8">
+      <h2 class="text-base font-semibold text-ink">
+        {{ t("home.ratingPath.title") }}
+      </h2>
+      <p class="mt-1 text-sm text-muted">{{ t("home.ratingPath.body") }}</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <Button as="a" :href="docsAtcHref" variant="secondary">
+          <template #icon><Icon name="bookOpen" class="size-4" /></template>
+          {{ t("home.ratingPath.guidelines") }}
+        </Button>
+        <Button as="a" :href="rosterHref" variant="ghost">
+          <template #icon><Icon name="users" class="size-4" /></template>
+          {{ t("home.ratingPath.roster") }}
+        </Button>
+      </div>
+    </Card>
+
+    <template v-if="!signedOut">
       <AlertBox v-if="error" variant="danger" class="mb-6">{{
         error
       }}</AlertBox>
 
       <EmptyState
-        v-if="!sections.length"
+        v-if="!shownPapers.length && scope === 'pilots'"
         icon="academicCap"
         :title="t('home.empty')"
         :description="t('home.emptyHint')"
       />
 
-      <section v-for="section in sections" :key="section.scope" class="mb-8">
-        <h2
-          class="mb-3 text-xs font-semibold uppercase tracking-widest text-faint"
-        >
-          {{ section.label }}
-        </h2>
-
+      <section v-if="shownPapers.length" class="mb-8">
         <div class="space-y-3">
-          <Card v-for="paper in section.papers" :key="paper.id" padding="lg">
+          <Card v-for="paper in shownPapers" :key="paper.id" padding="lg">
             <div class="flex flex-wrap items-start justify-between gap-4">
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
@@ -205,6 +270,14 @@ onMounted(async () => {
 
                 <p v-if="!paper.eligible" class="mt-3 text-xs text-warning-fg">
                   {{ t(`home.reason.${paper.reason}`) }}
+                  <!-- 缺分部资格：给一条去设置所属分部的路。 -->
+                  <a
+                    v-if="paper.reason === 'region'"
+                    :href="controllerHref"
+                    class="mt-1 block underline"
+                  >
+                    {{ t("home.reason.regionLink") }}
+                  </a>
                 </p>
               </div>
 
@@ -234,19 +307,22 @@ onMounted(async () => {
           {{ t("home.history.title") }}
         </h2>
 
-        <Card v-if="!records.length" padding="lg">
+        <Card v-if="!shownRecords.length" padding="lg">
           <p class="text-sm text-muted">{{ t("home.history.empty") }}</p>
         </Card>
 
         <ul v-else class="space-y-2">
           <li
-            v-for="record in records"
+            v-for="record in shownRecords"
             :key="record.id"
             class="flex items-center justify-between gap-4 rounded-card border border-subtle bg-surface-raised px-4 py-3"
           >
             <div class="min-w-0">
               <p class="truncate text-sm font-medium text-ink">
-                {{ paperFor(record)?.title || t("home.history.unknownExam") }}
+                {{
+                  paperForRecord(record, papers)?.title ||
+                  t("home.history.unknownExam")
+                }}
               </p>
               <p class="tnum mt-0.5 text-xs text-faint">
                 {{ formatDate(record.createdAt) }}

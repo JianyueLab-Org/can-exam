@@ -5,6 +5,7 @@
     "signingOut": "Signing out…",
     "signOutFailed": "Sign-out failed. Try again.",
     "examCentre": "Exams",
+    "training": "Training materials",
     "admin": "Question bank",
     "signInRequired": "Sign in to continue",
     "signInHint": "The exam centre needs an account. Sign in on the main site, then come back to this page.",
@@ -70,7 +71,9 @@
     "reason": {
       "rating": "Your rating does not need this exam",
       "email_unverified": "Verify your email address first",
-      "no_questions": "This exam has no questions yet"
+      "no_questions": "This exam has no questions yet",
+      "region": "Join this division first",
+      "regionLink": "Set your home division in the controller centre"
     },
     "history": {
       "title": "Your results",
@@ -78,6 +81,13 @@
       "passed": "Passed",
       "failed": "Not passed",
       "unknownExam": "Retired exam"
+    },
+    "tabs": "Exam tracks",
+    "ratingPath": {
+      "title": "How ATC ratings are awarded",
+      "body": "ATC ratings are not self-service. An instructor trains you on position, then files a promotion request that an administrator approves. Read the ATC guidelines to see what each rating expects.",
+      "guidelines": "Read the ATC guidelines",
+      "roster": "View the ATC roster"
     }
   },
   "region": {
@@ -122,7 +132,8 @@
       "rate_limited": "Too many requests. Try again shortly.",
       "no_questions": "This exam has no questions yet.",
       "rating": "Your rating may not sit this exam.",
-      "email_unverified": "Verify your email address first."
+      "email_unverified": "Verify your email address first.",
+      "region": "This exam needs membership of its division."
     },
     "multiple": "Multiple",
     "multipleHint": "More than one answer. Partial credit for a partial answer; a wrong tick costs marks.",
@@ -279,6 +290,31 @@
       "eligible_rating_too_high": "Every eligible rating must be below the promotion target.",
       "forbidden": "You do not instruct in any division.",
       "gone": "That question is gone — somebody may have deleted it."
+    }
+  },
+  "training": {
+    "title": "Training Materials",
+    "description": "Training material written by each division. The materials are non-normative — where they conflict with a division's rules or SOPs, the rules and SOPs win.",
+    "publishedCount": "{count} of {total} divisions have published materials",
+    "materialCount": "{count} materials",
+    "open": "Open the materials",
+    "pending": "Not published",
+    "pendingDescription": "This division has not published training materials yet.",
+    "back": "Back to Training Materials",
+    "backToCurriculum": "Back to the syllabus",
+    "onThisPage": "On this page",
+    "overview": "Series overview",
+    "overviewDescription": "Where the materials sit, the order they apply in, the per-position reading list and what counts as completion.",
+    "order": "Suggested order",
+    "rulesLink": "This division's ATC rules",
+    "languageNote": "Written by the division in {language}; the original text governs.",
+    "draft": "Draft",
+    "draftTitle": "Draft",
+    "draftNotice": "This document has not been ratified by the division yet; it may still change and should not be treated as final.",
+    "languages": {
+      "ja": "Japanese",
+      "zh": "Chinese",
+      "en": "English"
     }
   }
 }

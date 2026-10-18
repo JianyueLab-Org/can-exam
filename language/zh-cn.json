@@ -5,6 +5,7 @@
     "signingOut": "正在退出…",
     "signOutFailed": "退出失败，请重试。",
     "examCentre": "考试",
+    "training": "培训资料",
     "admin": "题库管理",
     "signInRequired": "请先登录",
     "signInHint": "考试中心需要登录后才能使用。登录入口在主站，登录完回到这一页即可。",
@@ -70,7 +71,9 @@
     "reason": {
       "rating": "你当前的等级不需要参加这场考试",
       "email_unverified": "请先验证邮箱地址",
-      "no_questions": "这场考试还没有题目"
+      "no_questions": "这场考试还没有题目",
+      "region": "请先加入该分部",
+      "regionLink": "去管制员中心设置所属分部"
     },
     "history": {
       "title": "我的成绩",
@@ -78,6 +81,13 @@
       "passed": "通过",
       "failed": "未通过",
       "unknownExam": "已下线的考试"
+    },
+    "tabs": "考试分栏",
+    "ratingPath": {
+      "title": "管制员等级如何取得",
+      "body": "管制员等级无法自助获得。由教员带你完成席位培训后提交晋升申请，再由管理员审批。各等级的要求请参阅管制员职业准则。",
+      "guidelines": "阅读管制员职业准则",
+      "roster": "查看管制员名册"
     }
   },
   "region": {
@@ -122,7 +132,8 @@
       "rate_limited": "操作太频繁，请过一会儿再试。",
       "no_questions": "这场考试还没有题目。",
       "rating": "你当前的等级不能参加这场考试。",
-      "email_unverified": "请先验证邮箱地址。"
+      "email_unverified": "请先验证邮箱地址。",
+      "region": "这场考试需要先加入它所属的分部。"
     },
     "multiple": "多选",
     "multipleHint": "这题可以选多个。少选按比例得分，多选一个错的会扣分。",
@@ -279,6 +290,31 @@
       "eligible_rating_too_high": "所有允许作答的等级都必须低于晋级目标。",
       "forbidden": "你不管理任何分部。",
       "gone": "这道题已经不在了，可能被别人删了。"
+    }
+  },
+  "training": {
+    "title": "训练教材",
+    "description": "各分部编写的管制训练教材。教材为非规范性材料，与分部规则或 SOP 冲突时以规则、SOP 为准。",
+    "publishedCount": "{total} 个分部中，{count} 个已发布教材",
+    "materialCount": "{count} 篇教材",
+    "open": "查看教材",
+    "pending": "尚未发布",
+    "pendingDescription": "该分部尚未发布训练教材。",
+    "back": "返回训练教材",
+    "backToCurriculum": "返回教材目录",
+    "onThisPage": "本页目录",
+    "overview": "教材总览",
+    "overviewDescription": "教材的定位、适用优先顺序、席位必修目安与修了标准。",
+    "order": "推荐学习顺序",
+    "rulesLink": "该分部的管制规则",
+    "languageNote": "本教材由分部以{language}编写，以原文为准。",
+    "draft": "草案",
+    "draftTitle": "草案",
+    "draftNotice": "本文档尚未由分部正式公布，内容仍可能变更，请勿作为最终依据。",
+    "languages": {
+      "ja": "日语",
+      "zh": "中文",
+      "en": "英语"
     }
   }
 }
