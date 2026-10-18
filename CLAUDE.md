@@ -212,6 +212,8 @@ region 和 promoteTo 两个下拉。提升只对 `promotionRegions` 中的 divis
 
 - 导航（`src/lib/nav.ts`）：考试 `/`、培训资料 `/training`；题库 `/admin` 对 rating ≥ 8 才画。
 - 布局：`/admin` 用 `tool`，其余用 `content`。
+- 页面满宽：不写 `max-w-*` 页面容器；`content` 页的区块用 `.page-gutter`，`tool` 页由外壳给边距。
+- `/404` 用 can-ui 的 `NotFound`。
 - 标题 `<页面> · <siteLabel 站名>`，在 `src/lib/pageTitle.ts`。根页只显示站名。
 - 退出（`src/lib/signOutTarget.ts`）：从 `/sit/*`、`/admin`、`/admin/*` 退出去 can-web `/`，其余页面原地刷新。
 - `theme-color` 两条 meta：浅色 `#ffffff`，深色 `#0b0f14`。

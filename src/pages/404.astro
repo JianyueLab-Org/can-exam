@@ -1,0 +1,23 @@
+---
+/**
+ * 404。外壳照常，正文是 can-ui 的 `NotFound`：全网同一份 404 版式和文案。
+ * 状态码由这一页设。
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { NotFound, notFoundText, originsFromEnv } from "@jianyuelab-org/can-ui";
+import { getLocale } from "@/lib/i18n";
+import { readMember } from "@/server/session";
+
+const locale = getLocale(Astro.cookies);
+const member = await readMember(Astro);
+Astro.response.status = 404;
+---
+
+<BaseLayout title={notFoundText(locale).title} member={member}>
+  <NotFound
+    current="exam"
+    locale={locale}
+    homeHref="/"
+    origins={originsFromEnv(import.meta.env)}
+  />
+</BaseLayout>

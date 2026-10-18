@@ -57,7 +57,7 @@ if (list.status >= 200 && list.status < 300) {
 }
 ---
 
-<BaseLayout title={paper?.title ?? t("title")} member={member} wide>
+<BaseLayout title={paper?.title ?? t("title")} member={member}>
   {
     refusal ? (
       <NoAccess

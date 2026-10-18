@@ -263,7 +263,7 @@ onBeforeUnmount(() => clearInterval(ticker));
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl">
+  <div>
     <div class="mb-6 flex items-center justify-between gap-4">
       <a
         href="/"
