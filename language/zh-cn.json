@@ -71,7 +71,9 @@
     "reason": {
       "rating": "你当前的等级不需要参加这场考试",
       "email_unverified": "请先验证邮箱地址",
-      "no_questions": "这场考试还没有题目"
+      "no_questions": "这场考试还没有题目",
+      "region": "请先加入该分部",
+      "regionLink": "去管制员中心设置所属分部"
     },
     "history": {
       "title": "我的成绩",
@@ -79,6 +81,13 @@
       "passed": "通过",
       "failed": "未通过",
       "unknownExam": "已下线的考试"
+    },
+    "tabs": "考试分栏",
+    "ratingPath": {
+      "title": "管制员等级如何取得",
+      "body": "管制员等级无法自助获得。由教员带你完成席位培训后提交晋升申请，再由管理员审批。各等级的要求请参阅管制员职业准则。",
+      "guidelines": "阅读管制员职业准则",
+      "roster": "查看管制员名册"
     }
   },
   "region": {
@@ -123,7 +132,8 @@
       "rate_limited": "操作太频繁，请过一会儿再试。",
       "no_questions": "这场考试还没有题目。",
       "rating": "你当前的等级不能参加这场考试。",
-      "email_unverified": "请先验证邮箱地址。"
+      "email_unverified": "请先验证邮箱地址。",
+      "region": "这场考试需要先加入它所属的分部。"
     },
     "multiple": "多选",
     "multipleHint": "这题可以选多个。少选按比例得分，多选一个错的会扣分。",

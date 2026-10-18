@@ -71,7 +71,9 @@
     "reason": {
       "rating": "你目前的等級不需要參加這場考試",
       "email_unverified": "請先驗證電子郵件地址",
-      "no_questions": "這場考試還沒有題目"
+      "no_questions": "這場考試還沒有題目",
+      "region": "請先加入該分部",
+      "regionLink": "前往管制員中心設定所屬分部"
     },
     "history": {
       "title": "我的成績",
@@ -79,6 +81,13 @@
       "passed": "通過",
       "failed": "未通過",
       "unknownExam": "已下線的考試"
+    },
+    "tabs": "考試分欄",
+    "ratingPath": {
+      "title": "管制員等級如何取得",
+      "body": "管制員等級無法自助取得。由教員帶你完成席位訓練後提交晉升申請，再由管理員審核。各等級的要求請參閱管制員職業準則。",
+      "guidelines": "閱讀管制員職業準則",
+      "roster": "檢視管制員名冊"
     }
   },
   "region": {
@@ -123,7 +132,8 @@
       "rate_limited": "操作太頻繁，請過一會兒再試。",
       "no_questions": "這場考試還沒有題目。",
       "rating": "你目前的等級不能參加這場考試。",
-      "email_unverified": "請先驗證電子郵件地址。"
+      "email_unverified": "請先驗證電子郵件地址。",
+      "region": "這場考試需要先加入它所屬的分部。"
     },
     "multiple": "多選",
     "multipleHint": "這題可以選多個。少選按比例得分，多選一個錯的會扣分。",

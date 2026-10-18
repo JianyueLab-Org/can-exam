@@ -56,6 +56,8 @@ const props = defineProps<{
   sitting: Sitting | null;
   /** 服务端读卷子时上游给的错误码。 */
   loadError: string | null;
+  /** 管制员中心首页：`region` 错误指向它，去那里设置所属分部。 */
+  controllerHref: string;
 }>();
 
 const t = createTranslator(props.messages);
@@ -68,6 +70,7 @@ const questionPrefix = useId();
 const sitting = ref<Sitting | null>(props.sitting);
 /** 题号 -> 选中的选项 id。单选题也是一组，只是长度恒为 1。 */
 const answers = ref<Record<number, number[]>>({});
+const errorCode = ref<string | null>(props.loadError);
 const error = ref<string | null>(
   props.loadError ? errorText(props.loadError) : null,
 );
@@ -205,7 +208,8 @@ async function draw() {
     window.history.replaceState({}, "", url);
     restore();
   } catch (err) {
-    error.value = errorText((err as { error?: string }).error ?? "");
+    errorCode.value = (err as { error?: string }).error ?? "";
+    error.value = errorText(errorCode.value);
   } finally {
     loading.value = false;
   }
@@ -330,9 +334,17 @@ onBeforeUnmount(() => clearInterval(ticker));
     </Card>
 
     <template v-else>
-      <AlertBox v-if="error" variant="danger" class="mb-6">{{
-        error
-      }}</AlertBox>
+      <AlertBox v-if="error" variant="danger" class="mb-6">
+        {{ error }}
+        <!-- 缺分部成员资格：给一条去设置所属分部的路。 -->
+        <a
+          v-if="errorCode === 'region'"
+          :href="controllerHref"
+          class="mt-2 block text-sm underline"
+        >
+          {{ t("home.reason.regionLink") }}
+        </a>
+      </AlertBox>
       <AlertBox v-else-if="expired" variant="warning" class="mb-6">
         {{ t("sit.expired") }}
       </AlertBox>

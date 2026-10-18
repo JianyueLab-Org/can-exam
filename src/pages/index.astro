@@ -10,7 +10,9 @@
  */
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import ExamCentre from "@/components/ExamCentre.vue";
-import { getLocale, getMessages } from "@/lib/i18n";
+import { siteUrl, originsFromEnv } from "@jianyuelab-org/can-ui";
+import { getLocale, getMessages, useTranslations } from "@/lib/i18n";
+import { parseScope } from "@/lib/examCentre";
 import type { AttemptRecord, PaperSummary } from "@/lib/exams";
 import { signInUrl } from "@/server/config";
 import { readMember } from "@/server/session";
@@ -20,6 +22,11 @@ const locale = getLocale(Astro.cookies);
 // 整本字典，不是某一个命名空间：这个岛屿要读 home.*、frame.* 和 sit.error.*
 // 三处 —— 交卷失败的那几个码是发卷时就可能撞上的。
 const messages = getMessages(locale);
+const t = useTranslations(locale, "home");
+
+// 当前是哪一栏：服务端读 `?scope=`，转发过来的链接直接落在对的那一栏。
+const scope = parseScope(Astro.url.searchParams.get("scope"));
+const origins = originsFromEnv(import.meta.env);
 
 const member = await readMember(Astro);
 
@@ -43,11 +50,18 @@ if (member) {
 const signInHref = signInUrl(Astro.url);
 ---
 
-<BaseLayout member={member}>
+<BaseLayout
+  title={scope === "controllers" ? t("controllers") : undefined}
+  member={member}
+>
   <ExamCentre
     messages={messages}
     papers={papers}
     records={records}
+    scope={scope}
+    controllerHref={siteUrl("controller", "/", origins)}
+    docsAtcHref={siteUrl("docs", "/zh_CN/atc", origins)}
+    rosterHref={siteUrl("web", "/roster", origins)}
     signedOut={!member}
     signInHref={signInHref}
     client:load

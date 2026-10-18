@@ -71,7 +71,9 @@
     "reason": {
       "rating": "Your rating does not need this exam",
       "email_unverified": "Verify your email address first",
-      "no_questions": "This exam has no questions yet"
+      "no_questions": "This exam has no questions yet",
+      "region": "Join this division first",
+      "regionLink": "Set your home division in the controller centre"
     },
     "history": {
       "title": "Your results",
@@ -79,6 +81,13 @@
       "passed": "Passed",
       "failed": "Not passed",
       "unknownExam": "Retired exam"
+    },
+    "tabs": "Exam tracks",
+    "ratingPath": {
+      "title": "How ATC ratings are awarded",
+      "body": "ATC ratings are not self-service. An instructor trains you on position, then files a promotion request that an administrator approves. Read the ATC guidelines to see what each rating expects.",
+      "guidelines": "Read the ATC guidelines",
+      "roster": "View the ATC roster"
     }
   },
   "region": {
@@ -123,7 +132,8 @@
       "rate_limited": "Too many requests. Try again shortly.",
       "no_questions": "This exam has no questions yet.",
       "rating": "Your rating may not sit this exam.",
-      "email_unverified": "Verify your email address first."
+      "email_unverified": "Verify your email address first.",
+      "region": "This exam needs membership of its division."
     },
     "multiple": "Multiple",
     "multipleHint": "More than one answer. Partial credit for a partial answer; a wrong tick costs marks.",
