@@ -3,7 +3,13 @@ import { signOutTarget } from "./signOutTarget";
 
 describe("signOutTarget", () => {
   test("pages that need sign-in go to can-web /", () => {
-    for (const p of ["/sit/new-member", "/admin", "/admin/", "/admin/3"]) {
+    for (const p of [
+      "/sit/new-member",
+      "/admin",
+      "/admin/",
+      "/admin/3",
+      "/results/12",
+    ]) {
       expect(signOutTarget(p)).toBe("web");
     }
   });

@@ -21,5 +21,7 @@ export function examNav(
 
 /** 考场页点亮「考试」；培训资料和题库按自己的路径点亮。 */
 export function navPathname(pathname: string): string {
-  return pathname.startsWith("/sit/") ? "/" : pathname;
+  return pathname.startsWith("/sit/") || pathname.startsWith("/results/")
+    ? "/"
+    : pathname;
 }

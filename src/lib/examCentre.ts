@@ -21,6 +21,12 @@ export function doneHref(scope: ExamScope): string {
   return scope === "controllers" ? "/?scope=controllers&done=1" : "/?done=1";
 }
 
+/** The saved result has its own page, with the originating track preserved. */
+export function resultHref(id: number, scope: ExamScope): string {
+  const base = `/results/${id}`;
+  return scope === "controllers" ? `${base}?scope=controllers` : base;
+}
+
 /** 考场地址。只有管制员栏带 `scope`，规则同 `scopeHref`。 */
 export function sitHref(slug: string, token: string, scope: ExamScope): string {
   const base = `/sit/${slug}?token=${encodeURIComponent(token)}`;

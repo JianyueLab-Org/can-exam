@@ -87,6 +87,7 @@ export interface QuestionResult {
 
 /** Submission score and optional per-question verdicts. */
 export interface SittingResult {
+  attemptId?: number;
   /**
    * 答对的题数，**可能带小数**（11.5）。
    *
@@ -111,6 +112,19 @@ export interface AttemptRecord {
   passed: boolean;
   createdAt: string;
   questionResults?: QuestionResult[];
+}
+
+/** A saved attempt. Null metadata is unavailable for older records. */
+export interface AttemptResult {
+  id: number;
+  examId: number;
+  score: number;
+  createdAt: string;
+  questionResults: QuestionResult[];
+  passMark: number | null;
+  passed: boolean | null;
+  earnedScore: number | null;
+  totalQuestions: number | null;
 }
 
 /** can-api 的信封：`{ status, data, timestamp }`。 */

@@ -5,6 +5,7 @@ import {
   paperForRecord,
   parseScope,
   recordsForScope,
+  resultHref,
   scopeHref,
   sitHref,
 } from "./examCentre";
@@ -23,6 +24,13 @@ const paper = (id: number, scope: "pilots" | "controllers"): PaperSummary => ({
   eligible: true,
   reason: "",
   openSitting: null,
+});
+
+describe("resultHref", () => {
+  test("links to an attempt and preserves the exam track", () => {
+    expect(resultHref(12, "pilots")).toBe("/results/12");
+    expect(resultHref(12, "controllers")).toBe("/results/12?scope=controllers");
+  });
 });
 const record = (id: number, examId: number): AttemptRecord => ({
   id,

@@ -326,5 +326,14 @@
     "incorrect": "不正解",
     "score": "{score}/1",
     "unavailablePrompt": "設問の本文は利用できません"
+  },
+  "results": {
+    "title": "試験結果",
+    "submitted": "答案を提出しました",
+    "history": "結果一覧を見る",
+    "submittedAt": "提出日時：",
+    "earnedScore": "{total} 点中 {score} 点",
+    "unavailable": "現在、試験結果を表示できません。しばらくしてから再度お試しください。",
+    "noDetails": "この受験記録には設問ごとの詳細がありません。"
   }
 }

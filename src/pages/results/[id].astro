@@ -1,0 +1,54 @@
+---
+/** Authenticated saved result. Only can-api decides which attempt is readable. */
+import { NotFound, notFoundText, originsFromEnv } from "@jianyuelab-org/can-ui";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import AttemptResult from "@/components/AttemptResult.vue";
+import { getLocale, getMessages, createTranslator } from "@/lib/i18n";
+import { parseScope } from "@/lib/examCentre";
+import { attemptPageState } from "@/lib/attemptResult";
+import { signInUrl } from "@/server/config";
+import { readMember } from "@/server/session";
+import { callApi } from "@/server/upstream";
+
+const locale = getLocale(Astro.cookies);
+const messages = getMessages(locale);
+const t = createTranslator(messages);
+const scope = parseScope(Astro.url.searchParams.get("scope"));
+const member = await readMember(Astro);
+if (!member) return Astro.redirect(signInUrl(Astro.url), 302);
+
+const response = await callApi(
+  Astro,
+  `/api/v1/pilot/exam/results/${encodeURIComponent(Astro.params.id ?? "")}`,
+);
+const state = attemptPageState(response.status, response.body);
+if (state.kind === "signin") return Astro.redirect(signInUrl(Astro.url), 302);
+if (state.kind === "notFound") Astro.response.status = 404;
+else if (state.kind === "unavailable") Astro.response.status = 502;
+Astro.response.headers.set("Cache-Control", "no-store, private");
+---
+
+<BaseLayout
+  title={state.kind === "notFound"
+    ? notFoundText(locale).title
+    : t("results.title")}
+  member={member}
+>
+  {
+    state.kind === "notFound" ? (
+      <NotFound
+        current="exam"
+        locale={locale}
+        homeHref="/"
+        origins={originsFromEnv(import.meta.env)}
+      />
+    ) : (
+      <AttemptResult
+        messages={messages}
+        result={state.kind === "ready" ? state.result : null}
+        scope={scope}
+        locale={locale}
+      />
+    )
+  }
+</BaseLayout>

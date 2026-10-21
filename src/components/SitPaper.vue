@@ -44,13 +44,11 @@ import { createTranslator } from "@/lib/i18n";
 import {
   api,
   countdown,
-  ratingName,
   type ExamScope,
   type Sitting,
   type SittingResult,
 } from "@/lib/exams";
-import { doneHref } from "@/lib/examCentre";
-import QuestionResults from "./QuestionResults.vue";
+import { doneHref, resultHref } from "@/lib/examCentre";
 
 const props = defineProps<{
   messages: Record<string, unknown>;
@@ -84,7 +82,6 @@ const loading = ref(false);
 const submitting = ref(false);
 const submitted = ref(false);
 const confirming = ref(false);
-const result = ref<SittingResult | null>(null);
 const now = ref(Date.now());
 
 let ticker: ReturnType<typeof setInterval> | undefined;
@@ -227,7 +224,7 @@ async function submit() {
   errorCode.value = null;
 
   try {
-    result.value = await api<SittingResult>(
+    const result = await api<SittingResult>(
       `/api/v1/sittings/${encodeURIComponent(sitting.value!.token)}`,
       { method: "POST", body: { answers: answers.value } },
     );
@@ -235,7 +232,10 @@ async function submit() {
     try {
       sessionStorage.removeItem(storageKey.value);
     } catch {
-      // 同上。
+      // Storage may be unavailable; the sitting remains locked.
+    }
+    if (result.attemptId) {
+      window.location.replace(resultHref(result.attemptId, props.scope));
     }
   } catch (err) {
     const code = (err as { error?: string }).error ?? "";
@@ -282,80 +282,14 @@ onBeforeUnmount(() => clearInterval(ticker));
       </span>
     </div>
 
-    <template v-if="submitted">
-      <Card padding="lg">
-        <div class="text-center">
-          <span
-            v-if="result"
-            class="mx-auto flex size-14 items-center justify-center rounded-full"
-            :class="
-              result?.passed
-                ? 'bg-success-bg text-success-fg'
-                : 'bg-danger-bg text-danger-fg'
-            "
-          >
-            <Icon
-              :name="result?.passed ? 'checkCircle' : 'xCircle'"
-              class="size-7"
-            />
-          </span>
-
-          <h1 class="mt-4 text-xl font-semibold text-ink">
-            {{
-              result
-                ? result.passed
-                  ? t("sit.result.passed")
-                  : t("sit.result.failed")
-                : t("sit.error.already_submitted")
-            }}
-          </h1>
-
-          <p v-if="result" class="tnum mt-2 text-3xl font-bold text-ink">
-            {{ t("sit.result.percent", { percent: result.percent }) }}
-          </p>
-          <p v-if="result" class="mt-1 text-sm text-muted">
-            {{
-              t("sit.result.score", {
-                correct: result.score,
-                total: result.totalQuestions,
-              })
-            }}
-            · {{ t("sit.result.passMark", { mark: result.passMark }) }}
-          </p>
-
-          <AlertBox
-            v-if="result?.promoted"
-            variant="success"
-            class="mt-5 text-left"
-          >
-            {{
-              t("sit.result.promoted", {
-                rating: ratingName(sitting?.paper.promoteTo),
-              })
-            }}
-          </AlertBox>
-          <p
-            v-else-if="result && !result.passed"
-            class="mt-3 text-sm text-muted"
-          >
-            {{ t("sit.result.retry") }}
-          </p>
-
-          <Button as="a" :href="doneHref(scope)" class="mt-6">
-            {{ t("sit.result.back") }}
-          </Button>
-        </div>
-      </Card>
-      <section v-if="result?.questionResults?.length" class="mt-6">
-        <h2 class="mb-3 text-lg font-semibold text-ink">
-          {{ t("review.title") }}
-        </h2>
-        <QuestionResults
-          :messages="messages"
-          :results="result.questionResults"
-        />
-      </section>
-    </template>
+    <Card v-if="submitted" padding="lg">
+      <h1 class="text-xl font-semibold text-ink">
+        {{ t("results.submitted") }}
+      </h1>
+      <Button as="a" :href="doneHref(scope)" class="mt-6">{{
+        t("results.history")
+      }}</Button>
+    </Card>
 
     <template v-else>
       <AlertBox v-if="error" variant="danger" class="mb-6">
