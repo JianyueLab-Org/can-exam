@@ -77,7 +77,15 @@ export interface Sitting {
   expiresAt: string;
 }
 
-/** 交卷之后拿到的东西。注意这里没有一道题的对错明细。 */
+/** One question's earned credit. Correct options are never included. */
+export interface QuestionResult {
+  questionId: number;
+  prompt: string;
+  score: number;
+  isRight: boolean;
+}
+
+/** Submission score and optional per-question verdicts. */
 export interface SittingResult {
   /**
    * 答对的题数，**可能带小数**（11.5）。
@@ -92,6 +100,7 @@ export interface SittingResult {
   passed: boolean;
   passMark: number;
   promoted: boolean;
+  questionResults?: QuestionResult[];
 }
 
 /** 成绩单里的一行。 */
@@ -101,6 +110,7 @@ export interface AttemptRecord {
   score: number;
   passed: boolean;
   createdAt: string;
+  questionResults?: QuestionResult[];
 }
 
 /** can-api 的信封：`{ status, data, timestamp }`。 */

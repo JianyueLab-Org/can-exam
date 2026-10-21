@@ -24,6 +24,7 @@ Astro SSR + Vue 岛屿 + Tailwind v4，和 can-dev、can-radar 同一套。
 - **没有登录。** 会话 cookie 是 can-api 签的、Domain 是父域，浏览器本来就带过
   来了；这个站点只是认得出来。登录入口只有主站一个。
 - **没有数据库。** 题库、卷子、成绩全在 can-api 的 MySQL 里。
+- **Question results.** Submission results and history show each question’s score and verdict. Older records may have no details.
 - **没有答案。** 发下来的卷子是 can-api 去掉答案之后的那一份。判卷也在那边。
 - **没有图床凭据。** 题目配图存在 Cloudflare R2 上，读走 `cdn.ceruleanavi.net`。上
   传那一下是转发给 can-api 的，R2 的密钥只在它那边 —— 和这个站点不碰数据库是同

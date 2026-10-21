@@ -32,6 +32,10 @@ bun run check:pages  # ⌘K 页面表里 exam 的每一条都有路由
 **去掉答案**之后的那一份 —— 整个前端被翻个底朝天，也翻不出任何一道题的正确选
 项。想在页面上「顺便显示一下正确答案」时会发现无处可取，那正是设计。
 
+Submission responses and history may include `questionResults`: question ID, prompt, earned score, and full-credit status.
+The UI distinguishes correct, partially correct, and incorrect answers.
+Correct options are excluded. Older records without details have no review control.
+
 唯一的例外是题库管理页（`/admin/*`），它显示答案，因为它的数据走的是上游
 `WithSuper`（教员及以上）后面、再按 division 过滤过的另一组路由。那一侧的类型在 `src/lib/admin.ts`，和考生
 侧的 `src/lib/exams.ts` **刻意不共享任何结构** —— 共享一个 `Question` 类型的

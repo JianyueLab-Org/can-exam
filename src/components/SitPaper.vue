@@ -50,6 +50,7 @@ import {
   type SittingResult,
 } from "@/lib/exams";
 import { doneHref } from "@/lib/examCentre";
+import QuestionResults from "./QuestionResults.vue";
 
 const props = defineProps<{
   messages: Record<string, unknown>;
@@ -281,61 +282,80 @@ onBeforeUnmount(() => clearInterval(ticker));
       </span>
     </div>
 
-    <!-- 成绩。交完卷之后这一页就只剩它了 —— 题目留在屏幕上只会让人去核对，
-         而核对不出任何东西：上游不发正确答案。 -->
-    <Card v-if="submitted" padding="lg">
-      <div class="text-center">
-        <span
-          class="mx-auto flex size-14 items-center justify-center rounded-full"
-          :class="
-            result?.passed
-              ? 'bg-success-bg text-success-fg'
-              : 'bg-danger-bg text-danger-fg'
-          "
-        >
-          <Icon
-            :name="result?.passed ? 'checkCircle' : 'xCircle'"
-            class="size-7"
-          />
-        </span>
+    <template v-if="submitted">
+      <Card padding="lg">
+        <div class="text-center">
+          <span
+            v-if="result"
+            class="mx-auto flex size-14 items-center justify-center rounded-full"
+            :class="
+              result?.passed
+                ? 'bg-success-bg text-success-fg'
+                : 'bg-danger-bg text-danger-fg'
+            "
+          >
+            <Icon
+              :name="result?.passed ? 'checkCircle' : 'xCircle'"
+              class="size-7"
+            />
+          </span>
 
-        <h1 class="mt-4 text-xl font-semibold text-ink">
-          {{ result?.passed ? t("sit.result.passed") : t("sit.result.failed") }}
-        </h1>
+          <h1 class="mt-4 text-xl font-semibold text-ink">
+            {{
+              result
+                ? result.passed
+                  ? t("sit.result.passed")
+                  : t("sit.result.failed")
+                : t("sit.error.already_submitted")
+            }}
+          </h1>
 
-        <p v-if="result" class="tnum mt-2 text-3xl font-bold text-ink">
-          {{ t("sit.result.percent", { percent: result.percent }) }}
-        </p>
-        <p v-if="result" class="mt-1 text-sm text-muted">
-          {{
-            t("sit.result.score", {
-              correct: result.score,
-              total: result.totalQuestions,
-            })
-          }}
-          · {{ t("sit.result.passMark", { mark: result.passMark }) }}
-        </p>
+          <p v-if="result" class="tnum mt-2 text-3xl font-bold text-ink">
+            {{ t("sit.result.percent", { percent: result.percent }) }}
+          </p>
+          <p v-if="result" class="mt-1 text-sm text-muted">
+            {{
+              t("sit.result.score", {
+                correct: result.score,
+                total: result.totalQuestions,
+              })
+            }}
+            · {{ t("sit.result.passMark", { mark: result.passMark }) }}
+          </p>
 
-        <AlertBox
-          v-if="result?.promoted"
-          variant="success"
-          class="mt-5 text-left"
-        >
-          {{
-            t("sit.result.promoted", {
-              rating: ratingName(sitting?.paper.promoteTo),
-            })
-          }}
-        </AlertBox>
-        <p v-else-if="result && !result.passed" class="mt-3 text-sm text-muted">
-          {{ t("sit.result.retry") }}
-        </p>
+          <AlertBox
+            v-if="result?.promoted"
+            variant="success"
+            class="mt-5 text-left"
+          >
+            {{
+              t("sit.result.promoted", {
+                rating: ratingName(sitting?.paper.promoteTo),
+              })
+            }}
+          </AlertBox>
+          <p
+            v-else-if="result && !result.passed"
+            class="mt-3 text-sm text-muted"
+          >
+            {{ t("sit.result.retry") }}
+          </p>
 
-        <Button as="a" :href="doneHref(scope)" class="mt-6">
-          {{ t("sit.result.back") }}
-        </Button>
-      </div>
-    </Card>
+          <Button as="a" :href="doneHref(scope)" class="mt-6">
+            {{ t("sit.result.back") }}
+          </Button>
+        </div>
+      </Card>
+      <section v-if="result?.questionResults?.length" class="mt-6">
+        <h2 class="mb-3 text-lg font-semibold text-ink">
+          {{ t("review.title") }}
+        </h2>
+        <QuestionResults
+          :messages="messages"
+          :results="result.questionResults"
+        />
+      </section>
+    </template>
 
     <template v-else>
       <AlertBox v-if="error" variant="danger" class="mb-6">

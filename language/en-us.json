@@ -317,5 +317,14 @@
       "zh": "Chinese",
       "en": "English"
     }
+  },
+  "review": {
+    "title": "Question results",
+    "view": "View question results",
+    "correct": "Correct",
+    "partial": "Partially correct",
+    "incorrect": "Incorrect",
+    "score": "{score}/1",
+    "unavailablePrompt": "Question text unavailable"
   }
 }
