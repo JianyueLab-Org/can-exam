@@ -77,12 +77,13 @@ export interface Sitting {
   expiresAt: string;
 }
 
-/** One question's earned credit. Correct options are never included. */
+/** One question's earned credit and submitted selections. No answer key. */
 export interface QuestionResult {
   questionId: number;
   prompt: string;
   score: number;
   isRight: boolean;
+  selectedAnswers?: { label: string; imageUrl: string }[] | null;
 }
 
 /** Submission score and optional per-question verdicts. */

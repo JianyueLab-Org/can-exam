@@ -35,7 +35,9 @@ bun run check:pages  # ⌘K 页面表里 exam 的每一条都有路由
 Submission responses and history may include `questionResults`: question ID, prompt, earned score, and full-credit status.
 The dedicated `/results/[id]` page shows correct, partially correct, and incorrect verdicts.
 History links to this page. Successful submissions redirect there using `attemptId`.
-Correct options are excluded. Older records without details show an explicit message.
+The page shows only the candidate’s selected option labels and images, never the answer key.
+Missing historical selections show an unavailable message; an empty selection shows unanswered.
+Older records without question details show an explicit message.
 
 唯一的例外是题库管理页（`/admin/*`），它显示答案，因为它的数据走的是上游
 `WithSuper`（教员及以上）后面、再按 division 过滤过的另一组路由。那一侧的类型在 `src/lib/admin.ts`，和考生

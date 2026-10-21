@@ -1,5 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { questionVerdict, questionScore } from "./questionResults";
+import {
+  questionVerdict,
+  questionScore,
+  selectedAnswerState,
+} from "./questionResults";
+
+describe("selectedAnswerState", () => {
+  test("distinguishes unavailable historic selections from an unanswered question", () => {
+    expect(selectedAnswerState(undefined)).toBe("unavailable");
+    expect(selectedAnswerState(null)).toBe("unavailable");
+    expect(selectedAnswerState([])).toBe("unanswered");
+    expect(
+      selectedAnswerState([{ label: "Chosen option", imageUrl: "" }]),
+    ).toBe("selected");
+  });
+});
 
 describe("questionVerdict", () => {
   test("distinguishes full, partial and zero credit", () => {

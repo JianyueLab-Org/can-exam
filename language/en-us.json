@@ -325,7 +325,10 @@
     "partial": "Partially correct",
     "incorrect": "Incorrect",
     "score": "{score}/1",
-    "unavailablePrompt": "Question text unavailable"
+    "unavailablePrompt": "Question text unavailable",
+    "yourAnswer": "Your answer",
+    "unavailableAnswer": "Selected answer unavailable.",
+    "unanswered": "Unanswered"
   },
   "results": {
     "title": "Exam result",
