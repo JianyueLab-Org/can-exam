@@ -29,6 +29,7 @@ import {
   sitHref,
 } from "@/lib/examCentre";
 import { pageTitle } from "@/lib/pageTitle";
+import QuestionResults from "./QuestionResults.vue";
 import {
   api,
   ratingName,
@@ -315,31 +316,46 @@ onMounted(async () => {
           <li
             v-for="record in shownRecords"
             :key="record.id"
-            class="flex items-center justify-between gap-4 rounded-card border border-subtle bg-surface-raised px-4 py-3"
+            class="rounded-card border border-subtle bg-surface-raised px-4 py-3"
           >
-            <div class="min-w-0">
-              <p class="truncate text-sm font-medium text-ink">
-                {{
-                  paperForRecord(record, papers)?.title ||
-                  t("home.history.unknownExam")
-                }}
-              </p>
-              <p class="tnum mt-0.5 text-xs text-faint">
-                {{ formatDate(record.createdAt) }}
-              </p>
+            <div class="flex items-center justify-between gap-4">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium text-ink">
+                  {{
+                    paperForRecord(record, papers)?.title ||
+                    t("home.history.unknownExam")
+                  }}
+                </p>
+                <p class="tnum mt-0.5 text-xs text-faint">
+                  {{ formatDate(record.createdAt) }}
+                </p>
+              </div>
+              <div class="flex shrink-0 items-center gap-3">
+                <span class="tnum text-sm font-semibold text-ink">
+                  {{ record.score }}%
+                </span>
+                <Badge :variant="record.passed ? 'success' : 'danger'">
+                  {{
+                    record.passed
+                      ? t("home.history.passed")
+                      : t("home.history.failed")
+                  }}
+                </Badge>
+              </div>
             </div>
-            <div class="flex shrink-0 items-center gap-3">
-              <span class="tnum text-sm font-semibold text-ink">
-                {{ record.score }}%
-              </span>
-              <Badge :variant="record.passed ? 'success' : 'danger'">
-                {{
-                  record.passed
-                    ? t("home.history.passed")
-                    : t("home.history.failed")
-                }}
-              </Badge>
-            </div>
+            <details
+              v-if="record.questionResults?.length"
+              class="mt-3 border-t border-subtle pt-3"
+            >
+              <summary class="cursor-pointer text-sm font-medium text-can">
+                {{ t("review.view") }}
+              </summary>
+              <QuestionResults
+                class="mt-3"
+                :messages="messages"
+                :results="record.questionResults"
+              />
+            </details>
           </li>
         </ul>
       </section>

@@ -317,5 +317,14 @@
       "zh": "中文",
       "en": "英语"
     }
+  },
+  "review": {
+    "title": "逐题结果",
+    "view": "查看逐题结果",
+    "correct": "正确",
+    "partial": "部分正确",
+    "incorrect": "错误",
+    "score": "{score}/1",
+    "unavailablePrompt": "题干不可用"
   }
 }

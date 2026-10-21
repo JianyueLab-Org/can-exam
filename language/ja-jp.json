@@ -317,5 +317,14 @@
       "zh": "中国語",
       "en": "英語"
     }
+  },
+  "review": {
+    "title": "設問ごとの結果",
+    "view": "設問ごとの結果を表示",
+    "correct": "正解",
+    "partial": "部分正解",
+    "incorrect": "不正解",
+    "score": "{score}/1",
+    "unavailablePrompt": "設問の本文は利用できません"
   }
 }
