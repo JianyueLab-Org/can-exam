@@ -325,7 +325,10 @@
     "partial": "部分正解",
     "incorrect": "不正解",
     "score": "{score}/1",
-    "unavailablePrompt": "設問の本文は利用できません"
+    "unavailablePrompt": "設問の本文は利用できません",
+    "yourAnswer": "あなたの回答",
+    "unavailableAnswer": "選択した回答を表示できません。",
+    "unanswered": "未回答"
   },
   "results": {
     "title": "試験結果",

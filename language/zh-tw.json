@@ -325,7 +325,10 @@
     "partial": "部分正確",
     "incorrect": "錯誤",
     "score": "{score}/1",
-    "unavailablePrompt": "題幹不可用"
+    "unavailablePrompt": "題幹不可用",
+    "yourAnswer": "你的答案",
+    "unavailableAnswer": "所選答案無法顯示。",
+    "unanswered": "未作答"
   },
   "results": {
     "title": "考試結果",
