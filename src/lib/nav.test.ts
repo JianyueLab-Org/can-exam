@@ -24,6 +24,7 @@ describe("examNav", () => {
 describe("navPathname", () => {
   test("sit pages light up Exams", () => {
     expect(navPathname("/sit/new-member")).toBe("/");
+    expect(navPathname("/results/12")).toBe("/");
   });
   test("training and admin keep their own path", () => {
     expect(navPathname("/training/jpn")).toBe("/training/jpn");

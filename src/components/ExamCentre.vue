@@ -25,11 +25,11 @@ import { createTranslator } from "@/lib/i18n";
 import {
   paperForRecord,
   recordsForScope,
+  resultHref,
   scopeHref,
   sitHref,
 } from "@/lib/examCentre";
 import { pageTitle } from "@/lib/pageTitle";
-import QuestionResults from "./QuestionResults.vue";
 import {
   api,
   ratingName,
@@ -343,19 +343,12 @@ onMounted(async () => {
                 </Badge>
               </div>
             </div>
-            <details
-              v-if="record.questionResults?.length"
-              class="mt-3 border-t border-subtle pt-3"
+            <a
+              :href="resultHref(record.id, scope)"
+              class="mt-3 inline-block text-sm font-medium text-can hover:underline"
             >
-              <summary class="cursor-pointer text-sm font-medium text-can">
-                {{ t("review.view") }}
-              </summary>
-              <QuestionResults
-                class="mt-3"
-                :messages="messages"
-                :results="record.questionResults"
-              />
-            </details>
+              {{ t("review.view") }}
+            </a>
           </li>
         </ul>
       </section>

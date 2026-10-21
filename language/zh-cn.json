@@ -326,5 +326,14 @@
     "incorrect": "错误",
     "score": "{score}/1",
     "unavailablePrompt": "题干不可用"
+  },
+  "results": {
+    "title": "考试结果",
+    "submitted": "试卷已提交",
+    "history": "查看成绩记录",
+    "submittedAt": "提交时间：",
+    "earnedScore": "{score} / {total} 分",
+    "unavailable": "暂时无法获取考试结果，请稍后重试。",
+    "noDetails": "本次考试没有可用的逐题明细。"
   }
 }

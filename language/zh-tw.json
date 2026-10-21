@@ -326,5 +326,14 @@
     "incorrect": "錯誤",
     "score": "{score}/1",
     "unavailablePrompt": "題幹不可用"
+  },
+  "results": {
+    "title": "考試結果",
+    "submitted": "試卷已提交",
+    "history": "查看成績記錄",
+    "submittedAt": "提交時間：",
+    "earnedScore": "{score} / {total} 分",
+    "unavailable": "暫時無法取得考試結果，請稍後重試。",
+    "noDetails": "本次考試沒有可用的逐題明細。"
   }
 }

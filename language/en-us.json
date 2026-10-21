@@ -326,5 +326,14 @@
     "incorrect": "Incorrect",
     "score": "{score}/1",
     "unavailablePrompt": "Question text unavailable"
+  },
+  "results": {
+    "title": "Exam result",
+    "submitted": "Paper submitted",
+    "history": "View your results",
+    "submittedAt": "Submitted:",
+    "earnedScore": "{score} of {total} points",
+    "unavailable": "Your result is temporarily unavailable. Try again later.",
+    "noDetails": "Question details are not available for this attempt."
   }
 }
