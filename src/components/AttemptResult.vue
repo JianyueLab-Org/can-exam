@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { Card, Icon } from "@jianyuelab-org/can-ui";
 import { createTranslator } from "@/lib/i18n";
-import type { AttemptResult, ExamScope } from "@/lib/exams";
+import {
+  formatDateTime,
+  type AttemptResult,
+  type ExamScope,
+} from "@/lib/exams";
 import { doneHref } from "@/lib/examCentre";
 import { questionScore } from "@/lib/questionResults";
 import QuestionResults from "./QuestionResults.vue";
@@ -19,14 +23,23 @@ const t = createTranslator(props.messages);
   <div>
     <a
       :href="doneHref(scope)"
-      class="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"
+      class="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-can"
     >
       <Icon name="arrowLeft" class="size-4" />
       {{ t("sit.back") }}
     </a>
     <Card v-if="result" padding="lg">
       <div class="text-center">
-        <h1 class="text-xl font-semibold text-ink">
+        <h1
+          class="text-xl font-semibold"
+          :class="
+            result.passed === null
+              ? 'text-ink'
+              : result.passed
+                ? 'text-success-fg'
+                : 'text-danger-fg'
+          "
+        >
           {{
             result.passed === null
               ? t("results.title")
@@ -55,7 +68,7 @@ const t = createTranslator(props.messages);
         <p class="mt-3 text-sm text-muted">
           {{ t("results.submittedAt") }}
           <time :datetime="result.createdAt">{{
-            new Date(result.createdAt).toLocaleString(locale)
+            formatDateTime(result.createdAt, locale)
           }}</time>
         </p>
       </div>

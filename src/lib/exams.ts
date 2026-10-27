@@ -248,3 +248,11 @@ export function countdown(ms: number): string {
     ? `${hours}:${pad(minutes)}:${pad(seconds)}`
     : `${minutes}:${pad(seconds)}`;
 }
+
+/** 成绩的提交时间，按页面语言写成「日期 + 时:分」。读不懂的原样返回。 */
+export function formatDateTime(iso: string, locale: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? iso
+    : date.toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
+}

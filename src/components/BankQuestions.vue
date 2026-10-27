@@ -620,9 +620,10 @@ watch(editorOpen, (open) => {
         {{ notice }}
       </AlertBox>
 
-      <!-- 筛选条。粘在顶上：一份五十题的卷子滚到一半想换个筛选，不该先滚回去。 -->
+      <!-- 筛选条。宽屏上粘在顶栏下面：一份五十题的卷子滚到一半想换个筛选，不该
+           先滚回去。窄屏上它有半屏高，粘住就只剩半屏看题，所以不粘。 -->
       <div
-        class="sticky top-2 z-30 mb-4 rounded-card border border-subtle bg-chrome p-3"
+        class="z-30 mb-4 rounded-card border border-subtle bg-chrome p-3 lg:sticky lg:top-[calc(var(--frame-bar-height)+0.5rem)]"
       >
         <div class="flex flex-wrap items-end gap-3">
           <div class="min-w-[12rem] flex-1">
@@ -696,10 +697,16 @@ watch(editorOpen, (open) => {
           class="rounded-card border border-subtle bg-surface-raised px-4 py-3"
           :class="question.status !== 1 ? 'opacity-60' : ''"
         >
-          <div class="flex items-start justify-between gap-4">
+          <div
+            class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+          >
             <div class="min-w-0 flex-1">
               <div
-                v-if="question.category || question.status !== 1"
+                v-if="
+                  question.category ||
+                  question.multiple ||
+                  question.status !== 1
+                "
                 class="mb-1.5 flex flex-wrap items-center gap-1.5"
               >
                 <Badge v-if="question.category" variant="info" size="sm">
@@ -765,12 +772,19 @@ watch(editorOpen, (open) => {
               </p>
             </div>
 
-            <div class="flex shrink-0 items-center gap-0.5">
+            <div
+              class="flex shrink-0 items-center gap-0.5 self-end sm:self-auto"
+            >
               <Button
                 variant="ghost"
                 size="sm"
                 icon-only
                 :loading="busyId === question.id"
+                :label="
+                  question.status === 1
+                    ? t('admin.questions.disable')
+                    : t('admin.questions.enable')
+                "
                 :title="
                   question.status === 1
                     ? t('admin.questions.disable')
@@ -789,6 +803,7 @@ watch(editorOpen, (open) => {
                 variant="ghost"
                 size="sm"
                 icon-only
+                :label="t('admin.questions.duplicate')"
                 :title="t('admin.questions.duplicate')"
                 @click="duplicate(question)"
               >
@@ -798,6 +813,7 @@ watch(editorOpen, (open) => {
                 variant="ghost"
                 size="sm"
                 icon-only
+                :label="t('admin.papers.edit')"
                 :title="t('admin.papers.edit')"
                 @click="edit(question)"
               >
@@ -809,6 +825,7 @@ watch(editorOpen, (open) => {
                 variant="ghost"
                 size="sm"
                 icon-only
+                :label="t('admin.questions.delete')"
                 :title="t('admin.questions.delete')"
                 @click="deleting = question"
               >
@@ -1020,6 +1037,7 @@ watch(editorOpen, (open) => {
           <button
             type="button"
             class="flex w-full items-center justify-between px-3 py-2 text-sm text-muted hover:text-ink"
+            :aria-expanded="previewing"
             @click="previewing = !previewing"
           >
             <span class="flex items-center gap-1.5">
