@@ -20,7 +20,7 @@ const t = createTranslator(props.messages);
     <li
       v-for="(result, index) in results"
       :key="result.questionId"
-      class="rounded-control border border-subtle bg-surface-raised p-4"
+      class="rounded-card border border-subtle bg-surface-raised p-4"
     >
       <div class="flex flex-wrap items-center justify-between gap-2">
         <p class="text-xs font-semibold text-faint">

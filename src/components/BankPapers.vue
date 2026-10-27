@@ -436,6 +436,7 @@ async function confirmDelete() {
                   variant="ghost"
                   size="sm"
                   icon-only
+                  :label="t('admin.papers.edit')"
                   :title="t('admin.papers.edit')"
                   @click="open(paper)"
                 >
@@ -447,6 +448,7 @@ async function confirmDelete() {
                   variant="ghost"
                   size="sm"
                   icon-only
+                  :label="t('admin.papers.delete')"
                   :title="t('admin.papers.delete')"
                   @click="deleting = paper"
                 >
@@ -566,12 +568,14 @@ async function confirmDelete() {
               }}
             </p>
 
+            <!-- 复选框是 sr-only 的，键盘焦点落在它身上时看不见，所以焦点环画在
+                 外面这一圈药丸上。 -->
             <div class="mt-2 flex flex-wrap gap-1.5">
               <label
                 v-for="rating in allRatings()"
                 :key="rating.id"
                 :class="[
-                  'flex items-center gap-1 rounded-control border px-2.5 py-1 text-xs transition-colors',
+                  'flex items-center gap-1 rounded-control border px-2.5 py-1 text-xs transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-can',
                   draft.promoteTo !== null &&
                   rating.id >= draft.promoteTo &&
                   !(draft.eligibleRatings ?? []).includes(rating.id)

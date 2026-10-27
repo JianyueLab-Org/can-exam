@@ -32,6 +32,7 @@ import {
 import { pageTitle } from "@/lib/pageTitle";
 import {
   api,
+  formatDateTime,
   ratingName,
   type AttemptRecord,
   type ExamScope,
@@ -40,6 +41,7 @@ import {
 
 const props = defineProps<{
   messages: Record<string, unknown>;
+  locale: string;
   papers: PaperSummary[];
   records: AttemptRecord[];
   /** 服务端读不到会话时为 true。这一页没有匿名用途。 */
@@ -92,11 +94,6 @@ function selectScope(event: MouseEvent, next: ExamScope) {
     next === "controllers" ? t("home.controllers") : undefined,
     document.documentElement.lang,
   );
-}
-
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString();
 }
 
 /**
@@ -162,18 +159,18 @@ onMounted(async () => {
       </Button>
     </AlertBox>
 
-    <div
-      role="tablist"
+    <!-- 两个分栏是两个地址，所以是一组链接而不是 tablist：tab 角色要求方向键
+         切换和配套的 tabpanel，这里两样都没有。 -->
+    <nav
       :aria-label="t('home.tabs')"
       class="mb-6 flex gap-6 border-b border-subtle"
     >
       <a
         v-for="s in SCOPES"
         :key="s"
-        role="tab"
         :href="scopeHref(s)"
-        :aria-selected="scope === s"
-        class="-mb-px border-b-2 pb-2 text-sm font-medium"
+        :aria-current="scope === s ? 'page' : undefined"
+        class="tap-target -mb-px border-b-2 pb-2 text-sm font-medium transition-colors"
         :class="
           scope === s
             ? 'border-can text-ink'
@@ -183,7 +180,7 @@ onMounted(async () => {
       >
         {{ t(`home.${s}`) }}
       </a>
-    </div>
+    </nav>
 
     <Card v-if="scope === 'controllers'" padding="lg" class="mb-8">
       <h2 class="text-base font-semibold text-ink">
@@ -217,7 +214,11 @@ onMounted(async () => {
       <section v-if="shownPapers.length" class="mb-8">
         <div class="space-y-3">
           <Card v-for="paper in shownPapers" :key="paper.id" padding="lg">
-            <div class="flex flex-wrap items-start justify-between gap-4">
+            <!-- 窄屏上按钮落到下面一行、撑满宽度：并排时按钮把左边挤到一行
+                 只剩三四个字，「25 题」都要折行。 -->
+            <div
+              class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+            >
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <h3 class="text-base font-semibold text-ink">
@@ -232,10 +233,10 @@ onMounted(async () => {
                   {{ paper.description }}
                 </p>
 
-                <dl
+                <ul
                   class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted"
                 >
-                  <dd class="flex items-center gap-1">
+                  <li class="flex items-center gap-1 whitespace-nowrap">
                     <Icon name="documentText" class="size-3.5" />
                     {{ t("home.questions", { count: paper.questionCount }) }}
                     <!-- 抽的是子集时把题库大小说出来：那是「每次都不一样」这件
@@ -243,22 +244,22 @@ onMounted(async () => {
                     <span v-if="paper.bankSize > paper.questionCount">
                       · {{ t("home.drawnFrom", { total: paper.bankSize }) }}
                     </span>
-                  </dd>
-                  <dd class="flex items-center gap-1">
+                  </li>
+                  <li class="flex items-center gap-1 whitespace-nowrap">
                     <Icon name="checkCircle" class="size-3.5" />
                     {{ t("home.passMark", { mark: paper.passMark }) }}
-                  </dd>
-                  <dd class="flex items-center gap-1">
+                  </li>
+                  <li class="flex items-center gap-1 whitespace-nowrap">
                     <Icon name="clock" class="size-3.5" />
                     {{
                       paper.timeLimit
                         ? t("home.timeLimit", { minutes: paper.timeLimit })
                         : t("home.noTimeLimit")
                     }}
-                  </dd>
-                  <dd
+                  </li>
+                  <li
                     v-if="paper.promoteTo !== null"
-                    class="flex items-center gap-1 text-can"
+                    class="flex items-center gap-1 whitespace-nowrap text-can"
                   >
                     <Icon name="sparkles" class="size-3.5" />
                     {{
@@ -266,8 +267,8 @@ onMounted(async () => {
                         rating: ratingName(paper.promoteTo),
                       })
                     }}
-                  </dd>
-                </dl>
+                  </li>
+                </ul>
 
                 <p v-if="!paper.eligible" class="mt-3 text-xs text-warning-fg">
                   {{ t(`home.reason.${paper.reason}`) }}
@@ -286,6 +287,7 @@ onMounted(async () => {
                 :disabled="!paper.eligible"
                 :loading="busy === paper.slug"
                 :variant="paper.openSitting ? 'primary' : 'secondary'"
+                class="w-full shrink-0 sm:w-auto"
                 @click="start(paper)"
               >
                 {{
@@ -326,9 +328,12 @@ onMounted(async () => {
                     t("home.history.unknownExam")
                   }}
                 </p>
-                <p class="tnum mt-0.5 text-xs text-faint">
-                  {{ formatDate(record.createdAt) }}
-                </p>
+                <time
+                  :datetime="record.createdAt"
+                  class="tnum mt-0.5 block text-xs text-faint"
+                >
+                  {{ formatDateTime(record.createdAt, locale) }}
+                </time>
               </div>
               <div class="flex shrink-0 items-center gap-3">
                 <span class="tnum text-sm font-semibold text-ink">

@@ -34,6 +34,7 @@ import { computed, onBeforeUnmount, onMounted, ref, useId } from "vue";
 
 import {
   AlertBox,
+  Badge,
   Button,
   Card,
   Dialog,
@@ -48,7 +49,7 @@ import {
   type Sitting,
   type SittingResult,
 } from "@/lib/exams";
-import { doneHref, resultHref } from "@/lib/examCentre";
+import { doneHref, resultHref, scopeHref } from "@/lib/examCentre";
 
 const props = defineProps<{
   messages: Record<string, unknown>;
@@ -78,7 +79,9 @@ const errorCode = ref<string | null>(props.loadError || null);
 const error = computed(() =>
   errorCode.value === null ? null : errorText(errorCode.value),
 );
-const loading = ref(false);
+// 服务端没带卷子、也没带错误时，挂载后马上要抽一张：首屏就画骨架，而不是先空
+// 一下再跳出来。
+const loading = ref(!props.sitting && !props.loadError);
 const submitting = ref(false);
 const submitted = ref(false);
 const confirming = ref(false);
@@ -267,8 +270,8 @@ onBeforeUnmount(() => clearInterval(ticker));
   <div>
     <div class="mb-6 flex items-center justify-between gap-4">
       <a
-        href="/"
-        class="flex items-center gap-1.5 text-sm text-muted hover:text-ink"
+        :href="scopeHref(scope)"
+        class="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-can"
       >
         <Icon name="arrowLeft" class="size-4" />
         {{ t("sit.back") }}
@@ -320,9 +323,9 @@ onBeforeUnmount(() => clearInterval(ticker));
         </h1>
         <p class="mt-1 text-xs text-faint">{{ t("sit.shuffled") }}</p>
 
-        <!-- 进度。粘在顶上，因为一张二十题的卷子滚起来看不见头。 -->
+        <!-- 进度。粘在顶栏下面，因为一张二十题的卷子滚起来看不见头。 -->
         <div
-          class="sticky top-2 z-30 mb-6 mt-4 rounded-card border border-subtle bg-chrome px-4 py-3"
+          class="sticky top-[calc(var(--frame-bar-height)+0.5rem)] z-30 mb-6 mt-4 rounded-card border border-subtle bg-chrome px-4 py-3"
         >
           <div class="flex items-center justify-between gap-4">
             <p :id="progressLabelId" class="text-sm font-medium text-ink">
@@ -351,7 +354,8 @@ onBeforeUnmount(() => clearInterval(ticker));
           <Card
             v-for="(question, index) in sitting.questions"
             :key="question.id"
-            padding="lg"
+            padding="none"
+            class="p-5 sm:p-8"
           >
             <div class="flex items-start justify-between gap-3">
               <p
@@ -365,19 +369,18 @@ onBeforeUnmount(() => clearInterval(ticker));
                   {{ question.category }}
                 </span>
               </p>
-              <span
-                v-if="question.multiple"
-                class="badge badge-info shrink-0"
-                :title="t('sit.multipleHint')"
-              >
-                {{ t("sit.multiple") }}
-              </span>
-              <span
-                v-if="!answered(question.id)"
-                class="badge badge-warning shrink-0"
-              >
-                {{ t("sit.unanswered") }}
-              </span>
+              <div class="flex shrink-0 flex-wrap justify-end gap-1.5">
+                <Badge
+                  v-if="question.multiple"
+                  variant="info"
+                  :title="t('sit.multipleHint')"
+                >
+                  {{ t("sit.multiple") }}
+                </Badge>
+                <Badge v-if="!answered(question.id)" variant="warning">
+                  {{ t("sit.unanswered") }}
+                </Badge>
+              </div>
             </div>
 
             <h2
