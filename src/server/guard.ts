@@ -20,15 +20,14 @@ import { publicOrigin } from "./config";
  * 的写操作是**发卷和交卷** —— 一个跨站请求能替人抽走一张卷子，或者替人交一张
  * 空白卷，而交卷是一次性的，交掉就没了。
  *
- * 会话 cookie 是 SameSite=Lax，跨站的表单 POST 本来就带不上它，所以这不是唯一
- * 的门 —— 但 Lax 对顶层导航的 GET 是放行的，哪天有人把某个写操作改成 GET、或
- * 者浏览器再改一次 Lax 的语义，这里是唯一还站着的东西。
+ * SameSite=Lax still sends cookies between sibling hosts. Unsafe requests must
+ * carry this site's configured Origin; safe requests do not need one.
  */
 export function crossOrigin(context: APIContext): boolean {
-  const sent = context.request.headers.get("origin");
-  // 没有 Origin 头的不是浏览器发起的跨站请求（curl、同源的老浏览器），放行 ——
-  // 拒绝它只会打到不带这个头的正常调用，挡不住任何东西。
-  return !!sent && sent !== publicOrigin();
+  const method = context.request.method;
+  if (method === "GET" || method === "HEAD" || method === "OPTIONS")
+    return false;
+  return context.request.headers.get("origin") !== publicOrigin();
 }
 
 /** 跨站请求的答复。形状和本站其他 `/api/v1/*` 的错误一致。 */

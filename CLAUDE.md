@@ -93,6 +93,10 @@ Astro 在 SSR 下默认从 `Host` 头推出本站 origin 再和浏览器的 `Ori
 值不是从请求头推的，反代动不了它。**部署里 `PUBLIC_ORIGIN` 不能省** —— 省掉它
 交卷会稳定地 403，而那是这个站点最不能坏的一个动作。
 
+Unsafe requests require `Origin` to equal `PUBLIC_ORIGIN`.
+Missing, `null`, and foreign origins return 403 before a sitting is issued, consumed, or forwarded.
+GET, HEAD, and OPTIONS do not require Origin.
+
 **6. 跨站地址不写相对路径。**
 
 外壳是 can-ui 的 `CanFrame`（`src/components/Frame.vue`）。登录地址由
