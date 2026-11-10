@@ -114,6 +114,12 @@ kubectl apply -f deploy/k8s.yaml
    Object Read & Write 的 API 令牌，把那五项配进 can-api。不做这一步的话，站点
    一切正常，只是上传按钮会说图片存储没配。
 
+Each deployment first calls the local `check.yml` in the same run.
+Lint, build, and page checks must pass before deployment starts.
+Checks use Bun `1.4.2` and only the automatic `GITHUB_TOKEN`; no production secrets are forwarded.
+The shared deployment workflow is pinned to `f88d7b04291aa9076f26949fa35bb04a6baa9cc1` and uses Bun `1.4.2`.
+Only `KUBECONFIG_B64` and `GHCR_PULL_TOKEN` are explicitly forwarded to deployment.
+
 ## 和 can-web 的关系
 
 can-web 的 `/exams/*` 转发到这里，映射见 `CLAUDE.md`。
