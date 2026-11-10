@@ -114,6 +114,10 @@ kubectl apply -f deploy/k8s.yaml
    Object Read & Write 的 API 令牌，把那五项配进 can-api。不做这一步的话，站点
    一切正常，只是上传按钮会说图片存储没配。
 
+Docker 构建上下文排除本地 `.env*`、依赖、生成产物、Git 元数据和商业
+`data/navdata`，保留 `.npmrc`、源码（含培训资料）、静态资源、词典和构建脚本。
+运行时环境变量由部署注入；包令牌通过 `github_token` BuildKit secret 提供。
+
 Each deployment first calls the local `check.yml` in the same run.
 Lint, build, and page checks must pass before deployment starts.
 Checks use Bun `1.4.2` and only the automatic `GITHUB_TOKEN`; no production secrets are forwarded.
