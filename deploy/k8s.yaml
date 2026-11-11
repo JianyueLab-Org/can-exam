@@ -31,6 +31,11 @@ metadata:
   namespace: can-exam
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: can-exam
@@ -39,10 +44,15 @@ spec:
       labels:
         app: can-exam
     spec:
+      terminationGracePeriodSeconds: 30
       containers:
         - name: app
           image: ghcr.io/jianyuelab-org/can-exam:latest
           imagePullPolicy: Always
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "10"]
           ports:
             - containerPort: 4321
           env:
