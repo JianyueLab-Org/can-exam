@@ -121,6 +121,11 @@ Docker 构建上下文排除本地 `.env*` 和 `.npmrc`、依赖、生成产物�
 包令牌仅通过 `github_token` BuildKit secret 提供；运行镜像不复制 `.npmrc`。
 运行时环境变量由部署注入。
 
+`bun run start` 和运行镜像通过 `scripts/start.mjs` 启动 standalone 服务。
+滚动更新保留两个可用副本，最多新增一个副本。
+Pod 的 preStop 等待 10 秒；收到 SIGTERM 后停止接收新连接，最多用 15 秒排空现有请求。
+Pod 终止宽限期为 30 秒；排空超时以非零状态退出。
+
 Each deployment first calls the local `check.yml` in the same run.
 Lint, build, and page checks must pass before deployment starts.
 Checks use Bun `1.4.2` and only the automatic `GITHUB_TOKEN`; no production secrets are forwarded.
