@@ -182,6 +182,7 @@
       "slug": "位址",
       "slugHelp": "只能用小寫字母、數字和連字號，作答位址是 /sit/<位址>。",
       "division": "分部",
+      "divisionPlaceholder": "請選擇分部",
       "divisionHelp": "決定誰能改這份卷子：該分部的教員、現任分部主管和 SUP/ADM 都能改。",
       "name": "名稱",
       "description": "說明",
@@ -283,6 +284,7 @@
       "figureAlt": "題目配圖"
     },
     "errors": {
+      "region_required": "儲存前請選擇分部。",
       "wrong_region": "你只能把卷子放在自己管理的分部下。",
       "grant_too_high": "卷子不能授予你自己的等級或更高。",
       "promotion_forbidden": "只有該分部的現任主管能設定晉級。",

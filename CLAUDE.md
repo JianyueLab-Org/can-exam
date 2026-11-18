@@ -194,6 +194,9 @@ region 和 promoteTo 两个下拉。提升只对 `promotionRegions` 中的 divis
 这个字段的旧响应按空数组处理。自己算的话，一个 I1 和一个 ADM 会看到同一份选项，
 然后其中一个人保存时撞 403。
 
+SUP/ADM 新建卷子时必须明确选择分部（包括「全网」），不预选。教员新建时仍默认
+选中第一个可管理的分部；编辑时保留原分部。
+
 `lib/member.ts` 的 `MIN_ADMIN_RATING` 是 can-ui 的 `RATING_INSTRUCTOR`（8，I1），它只决定导航上画不画那个链接。
 上游对清单答 403 时，题库页在原地址渲染 can-ui 的 `NoAccess`，HTTP 403；`lib/access.ts`
 只按 rating 挑说明文字，不决定放不放行。没登录的考场和题库页 302 到主站 `/signin?callbackUrl=`。

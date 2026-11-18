@@ -182,6 +182,7 @@
       "slug": "アドレス",
       "slugHelp": "小文字・数字・ハイフンのみ。受験ページは /sit/<アドレス> です。",
       "division": "ディビジョン",
+      "divisionPlaceholder": "ディビジョンを選択",
       "divisionHelp": "この試験を編集できる人を決めます：そのディビジョンの教員・active director・SUP/ADM。",
       "name": "名称",
       "description": "説明",
@@ -283,6 +284,7 @@
       "figureAlt": "問題の図"
     },
     "errors": {
+      "region_required": "保存する前にディビジョンを選択してください。",
       "wrong_region": "自分が担当する division にのみ試験を作成できます。",
       "grant_too_high": "試験で自分と同等以上のレーティングは付与できません。",
       "promotion_forbidden": "昇格を設定できるのは、その division の active director だけです。",
