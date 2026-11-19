@@ -182,6 +182,7 @@
       "slug": "Address",
       "slugHelp": "Lowercase letters, digits and dashes. Candidates sit it at /sit/<address>.",
       "division": "Division",
+      "divisionPlaceholder": "Select a division",
       "divisionHelp": "Decides who may edit this paper: that division's instructors and active directors, plus SUP/ADM.",
       "name": "Name",
       "description": "Description",
@@ -283,6 +284,7 @@
       "figureAlt": "Question figure"
     },
     "errors": {
+      "region_required": "Select a division before saving.",
       "wrong_region": "You may only file papers under a division you instruct in.",
       "grant_too_high": "An exam may not grant your own rating or above.",
       "promotion_forbidden": "Only an active director for this division may configure promotion.",

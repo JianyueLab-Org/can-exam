@@ -87,10 +87,12 @@ const authority = computed<BankAuthority>(
     },
 );
 const error = ref<string | null>(null);
+const regionError = ref(false);
 const saving = ref(false);
 const editing = ref(false);
 /** 编辑中的那一份。id 为 0 表示新建。 */
-const draft = ref<AdminPaper>(blankPaper());
+type PaperDraft = Omit<AdminPaper, "region"> & { region: number | null };
+const draft = ref<PaperDraft>(blankPaper());
 
 /**
  * 按**分部**分组，不是按分栏。
@@ -121,16 +123,16 @@ const sections = computed(() => {
  *
  * Division 默认落在**自己管理的第一个**上，而不是 0 —— 对教员来说 0 是个存不
  * 进去的值，让表单从一个上游会拒绝的状态开始，就是让人保存一次撞一次 403。
- * SUP/ADM 的第一个恰好就是「全网」，也正是他们多半想要的那个。
+ * SUP/ADM 新建时不预选分部，必须明确选择；「全网」也是一个选项。
  */
-function blankPaper(): AdminPaper {
+function blankPaper(): PaperDraft {
   return {
     ...EMPTY_PAPER,
     id: 0,
     draw: 0,
     questionCount: 0,
     createdBy: "",
-    region: authority.value.regions[0] ?? 0,
+    region: authority.value.global ? null : (authority.value.regions[0] ?? 0),
   };
 }
 
@@ -168,8 +170,9 @@ function setPromoteTo(value: string | number) {
 }
 
 function setRegion(value: string | number) {
-  const region = Number(value);
+  const region = value === "" ? null : Number(value);
   draft.value.region = region;
+  regionError.value = false;
   // A region change must never carry a promotion setting into a division where
   // this authority cannot configure it.
   if (
@@ -182,6 +185,7 @@ function setRegion(value: string | number) {
 
 function open(paper?: AdminPaper) {
   error.value = null;
+  regionError.value = false;
   draft.value = paper
     ? { ...paper, eligibleRatings: [...(paper.eligibleRatings ?? [])] }
     : blankPaper();
@@ -226,6 +230,10 @@ async function save() {
 
   const problem = paperProblem(draft.value, authority.value);
   if (problem) {
+    if (problem === "region_required") {
+      regionError.value = true;
+      return;
+    }
     error.value = t(`admin.errors.${problem}`);
     return;
   }
@@ -237,7 +245,7 @@ async function save() {
     title: draft.value.title.trim(),
     description: draft.value.description,
     scope: draft.value.scope,
-    region: Number(draft.value.region) || 0,
+    region: draft.value.region,
     drawCount: Number(draft.value.drawCount) || 0,
     passMark: Number(draft.value.passMark) || 0,
     timeLimit: Number(draft.value.timeLimit) || 0,
@@ -522,10 +530,19 @@ async function confirmDelete() {
                出两行，两列就错开了。 -->
           <div class="grid gap-4 sm:grid-cols-2">
             <Select
-              :model-value="String(draft.region)"
+              :model-value="draft.region === null ? '' : String(draft.region)"
               :label="t('admin.paper.division')"
               :options="regionOptions"
+              :placeholder="
+                !draft.id && authority.global
+                  ? t('admin.paper.divisionPlaceholder')
+                  : undefined
+              "
+              :required="!draft.id && authority.global"
               :hint="t('admin.paper.divisionHelp')"
+              :error="
+                regionError ? t('admin.errors.region_required') : undefined
+              "
               @update:model-value="setRegion"
             />
             <Select

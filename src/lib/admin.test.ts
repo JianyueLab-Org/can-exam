@@ -35,6 +35,15 @@ describe("canConfigurePromotion", () => {
 });
 
 describe("paperProblem", () => {
+  test("requires a selected region but accepts explicit network-wide", () => {
+    const global = authority({ global: true, regions: [0, 1] });
+    const draft = { promoteTo: null, eligibleRatings: [] };
+    expect(paperProblem({ ...draft, region: null }, global)).toBe(
+      "region_required",
+    );
+    expect(paperProblem({ ...draft, region: 0 }, global)).toBeNull();
+  });
+
   test("allows no-promotion papers with any eligibility list", () => {
     expect(
       paperProblem(

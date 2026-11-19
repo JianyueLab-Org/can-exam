@@ -182,6 +182,7 @@
       "slug": "地址",
       "slugHelp": "只能用小写字母、数字和连字符，作答地址是 /sit/<地址>。",
       "division": "分部",
+      "divisionPlaceholder": "请选择分部",
       "divisionHelp": "决定谁能改这份卷子：该分部的教员、现任分部主管和 SUP/ADM 都能改。",
       "name": "名称",
       "description": "说明",
@@ -283,6 +284,7 @@
       "figureAlt": "题目配图"
     },
     "errors": {
+      "region_required": "保存前请选择分部。",
       "wrong_region": "你只能把卷子放在自己管理的分部下。",
       "grant_too_high": "卷子不能授予你自己的等级或更高。",
       "promotion_forbidden": "只有该分部的现任主管能配置晋级。",

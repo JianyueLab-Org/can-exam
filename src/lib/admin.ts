@@ -63,14 +63,15 @@ export interface BankAuthority {
   promotionRegions?: number[];
 }
 
-/** Fields used by the paper editor's local promotion checks. */
+/** Fields used by the paper editor's local checks. */
 export interface PaperDraftSettings {
-  region: number;
+  region: number | null;
   promoteTo: number | null;
   eligibleRatings: number[] | null;
 }
 
 export type PaperProblem =
+  | "region_required"
   | "promotion_forbidden"
   | "eligible_rating_required"
   | "eligible_rating_unknown"
@@ -79,13 +80,15 @@ export type PaperProblem =
 /** Promotion is a director-region permission, not a rating or global shortcut. */
 export function canConfigurePromotion(
   authority: Pick<BankAuthority, "promotionRegions">,
-  region: number,
+  region: number | null,
 ): boolean {
-  return authority.promotionRegions?.includes(region) ?? false;
+  return (
+    region !== null && (authority.promotionRegions?.includes(region) ?? false)
+  );
 }
 
 /**
- * Check promotion-specific paper settings before sending them upstream.
+ * Check editor settings before sending them upstream.
  * Empty eligibleRatings keeps its existing meaning for non-promoting papers:
  * every rating may sit them. Promotion papers must name their source ratings.
  */
@@ -93,6 +96,7 @@ export function paperProblem(
   draft: PaperDraftSettings,
   authority: Pick<BankAuthority, "promotionRegions">,
 ): PaperProblem | null {
+  if (draft.region === null) return "region_required";
   if (draft.promoteTo === null) return null;
   if (!canConfigurePromotion(authority, draft.region)) {
     return "promotion_forbidden";
